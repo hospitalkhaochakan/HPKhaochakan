@@ -1,0 +1,2586 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>ระบบธนาคารเลือด (Blood Bank Inventory System) - โรงพยาบาลเขาฉกรรจ์</title>
+    <!-- Google Font Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { kanit: ['Kanit', 'sans-serif'], sans: ['Kanit', 'sans-serif'] },
+            colors: {
+              ink: '#1e293b',
+              blood: '#dc2626',
+              crimson: '#991b1b',
+              crimsonlight: '#be123c',
+              amberbank: '#d97706',
+              darknavy: '#0f172a'
+            },
+          },
+        },
+      };
+    </script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Config File -->
+    <script src="config.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Html5-QRCode for Camera Barcode Scanning -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+      * { font-family: 'Kanit', sans-serif; }
+      body { background-color: #f8fafc; }
+      .view { display: none; }
+      .view.active { display: block; }
+      .nav.active, .bottom-nav.active, .drawer-nav.active { color: #991b1b; background: #fff1f2; border-left: 4px solid #991b1b; }
+      .bottom-nav.active { border-left: none; border-bottom: 3px solid #991b1b; }
+      .loading .loader { display: grid; }
+      .loader { display: none; }
+      .guest-only, .app-only, .admin-only, .mt-only, .doctor-only, .nurse-only { display: none; }
+      body.guest .guest-only { display: flex; }
+      body.auth .app-only { display: block; }
+      body.auth .app-flex { display: flex; }
+      body.role-ADMIN .admin-only { display: block; }
+      body.role-ADMIN .admin-flex { display: flex; }
+      body.role-MT .mt-only, body.role-ADMIN .mt-only { display: block; }
+      body.role-DOCTOR .doctor-only, body.role-ADMIN .doctor-only { display: block; }
+      body.role-NURSE .nurse-only, body.role-ADMIN .nurse-only { display: block; }
+
+      .field { display: grid; gap: 0.25rem; color: #475569; font-size: 0.85rem; font-weight: 600; }
+      .field input, .field select, .field textarea {
+        min-height: 2.75rem; border: 1px solid #cbd5e1; border-radius: 0.625rem; background: #ffffff;
+        padding: 0 0.75rem; color: #0f172a; outline: none; width: 100%; font-size: 0.9rem;
+        transition: all 0.2s ease;
+      }
+      .field input:focus, .field select:focus, .field textarea:focus {
+        border-color: #be123c; box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.15); background: #ffffff;
+      }
+
+      .img-fallback-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        background: #f1f5f9;
+        border: 1px dashed #cbd5e1;
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+
+      /* Barcode Scanner Viewport */
+      #cameraScannerModal video {
+        border-radius: 1rem;
+        width: 100% !important;
+      }
+
+      /* A5 Print Styles */
+      @media print {
+        @page {
+          size: A5 landscape;
+          margin: 6mm;
+        }
+        html, body {
+          width: 100%;
+          height: 100%;
+          background: #ffffff !important;
+          font-size: 11pt;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        .a5-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          border: 2px solid #000000 !important;
+          padding: 6mm !important;
+          page-break-after: always;
+          box-shadow: none !important;
+        }
+      }
+      @media screen {
+        .print-only { display: none; }
+      }
+    </style>
+  </head>
+  <body class="guest text-ink selection:bg-rose-200 selection:text-rose-900">
+
+    <!-- Global Loader -->
+    <div id="globalLoader" class="loader fixed inset-0 z-[100] place-items-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white/95 backdrop-blur-xl px-6 py-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <div class="flex items-center gap-4">
+          <div class="h-9 w-9 shrink-0 animate-spin rounded-full border-4 border-rose-100 border-t-crimson"></div>
+          <div>
+            <p class="font-bold text-slate-900 text-base">กำลังประมวลผลระบบ</p>
+            <p id="loaderText" class="text-xs font-medium text-slate-500">กรุณารอสักครู่...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Screen -->
+    <section id="loginScreen" class="guest-only min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-100 via-slate-50 to-slate-200 p-4">
+      <div class="w-full max-w-md rounded-3xl bg-white/90 backdrop-blur-xl p-8 shadow-[0_10px_40px_rgba(153,27,27,0.12)] border border-white">
+        <div class="mb-6 text-center flex flex-col items-center">
+          <div class="h-16 w-16 bg-gradient-to-br from-crimsonlight to-crimson text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-crimson/30">
+            <i data-lucide="droplet" class="w-8 h-8 fill-current"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">ระบบธนาคารเลือด (Supabase)</h1>
+          <p class="mt-1 text-sm font-semibold text-crimson">โรงพยาบาลเขาฉกรรจ์</p>
+        </div>
+
+        <div id="supabaseConnAlert" class="hidden mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800">
+          <div class="flex items-start gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-bold">ยังไม่ได้ตั้งค่า Supabase API Key</p>
+              <p class="text-[0.75rem] text-amber-700 mt-0.5">กรุณาระบุ <code>SUPABASE_URL</code> และ <code>SUPABASE_ANON_KEY</code> ในไฟล์ <code>config.js</code></p>
+            </div>
+          </div>
+        </div>
+
+        <form id="loginForm" class="grid gap-4">
+          <label class="field">
+            <span>ชื่อผู้ใช้งาน</span>
+            <div class="relative">
+              <input name="username" autocomplete="username" required placeholder="เช่น admin, mt01, nurse01, doctor01">
+              <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
+            </div>
+          </label>
+          <label class="field">
+            <span>รหัสผ่าน</span>
+            <div class="relative">
+              <input name="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
+            </div>
+          </label>
+          <button class="mt-2 min-h-[3rem] rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson transition-all duration-300 font-bold text-white shadow-md shadow-rose-900/20 flex items-center justify-center gap-2" type="submit">
+            <i data-lucide="log-in" class="w-5 h-5"></i> ลงชื่อเข้าใช้งาน
+          </button>
+          <p id="loginMessage" class="min-h-5 text-xs font-bold text-red-600 text-center"></p>
+        </form>
+
+        <div class="mt-4 pt-4 border-t border-slate-100 text-center text-xs text-slate-500 space-y-1">
+          <p class="font-semibold text-slate-700">บัญชีทดสอบระบบ:</p>
+          <p>🔑 ผู้ดูแลระบบ: <code>admin</code> / <code>1234</code></p>
+          <p>🔬 นักเทคนิค: <code>mt01</code> / <code>mt1234</code></p>
+          <p>👩‍⚕️ พยาบาลจองเลือด: <code>nurse01</code> / <code>nurse1234</code></p>
+          <p>👨‍⚕️ แพทย์: <code>doctor01</code> / <code>doctor1234</code></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Shell -->
+    <div id="appShell" class="app-only min-h-screen pb-20 lg:pb-0">
+      
+      <!-- Top Header with Toggleable Hamburger Menu -->
+      <header class="no-print sticky top-0 z-30 border-b border-rose-900 bg-gradient-to-r from-crimson via-crimson to-crimsonlight text-white px-3 py-2.5 sm:px-6 sm:py-3 shadow-md lg:ml-48">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <!-- Hamburger Menu Button (Mobile / Tablet only) -->
+            <button id="toggleDrawerBtn" class="flex lg:hidden h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/20 shadow-sm" title="เปิด/ปิด แถบเมนู">
+              <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+
+            <div class="h-10 w-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-inner hidden sm:flex">
+              <i data-lucide="droplet" class="w-6 h-6 fill-current text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-base font-bold sm:text-xl tracking-tight leading-tight flex items-center gap-2">
+                ระบบธนาคารเลือด
+                <span class="text-[0.65rem] font-semibold bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline">Supabase</span>
+              </h1>
+              <p class="text-[0.7rem] sm:text-xs text-rose-100 font-medium">โรงพยาบาลเขาฉกรรจ์</p>
+            </div>
+          </div>
+          
+          <div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+            <div class="relative hidden max-w-xs sm:block w-full">
+              <input id="globalSearch" class="h-9 w-full rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm pl-8 pr-3 text-xs text-white placeholder-rose-200 outline-none focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-rose-300 transition-all shadow-inner" placeholder="ค้นหา HN, Donation ID, Barcode...">
+              <i data-lucide="search" class="w-4 h-4 text-rose-200 absolute left-2.5 top-2.5"></i>
+            </div>
+            <div class="min-w-0 flex items-center gap-2 border-l border-white/20 pl-2 sm:pl-3 text-right">
+              <div>
+                <p id="currentUserName" class="truncate font-bold text-xs leading-tight max-w-[120px] sm:max-w-[180px]">-</p>
+                <p id="currentUserRole" class="text-[0.7rem] text-rose-200">-</p>
+              </div>
+              <button id="logoutTopBtn" class="lg:hidden rounded-lg bg-white/10 hover:bg-white/20 px-2.5 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 transition-colors border border-white/30 backdrop-blur-sm">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">ออก</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Desktop Sidebar (Compact w-48) -->
+      <aside id="desktopSidebar" class="no-print fixed inset-y-0 left-0 z-40 hidden w-48 border-r border-slate-200 bg-white/95 backdrop-blur-xl p-2.5 shadow-sm lg:flex lg:flex-col">
+        <div class="mb-3 pb-3 border-b border-slate-100 flex items-center gap-2.5 shrink-0">
+          <div class="h-8 w-8 bg-gradient-to-br from-crimsonlight to-crimson text-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 leading-tight">เมนูควบคุม</h2>
+            <p class="text-[0.6rem] font-bold text-crimson uppercase tracking-wider">Blood Bank</p>
+          </div>
+        </div>
+        <nav id="desktopMenu" class="flex flex-col gap-1 flex-1 overflow-y-auto pr-0.5 pb-2"></nav>
+      </aside>
+
+      <!-- Slide-over Drawer Menu (For Mobile, Tablet, & Screen Overlay) -->
+      <div id="sidebarDrawer" class="no-print fixed inset-0 z-50 hidden">
+        <div id="drawerBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-y-0 left-0 flex max-w-full">
+          <div class="w-64 bg-white p-4 shadow-2xl flex flex-col justify-between animate-in slide-in-from-left duration-200">
+            <div>
+              <div class="mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="h-9 w-9 bg-crimson text-white rounded-xl flex items-center justify-center shadow-sm">
+                    <i data-lucide="droplet" class="w-5 h-5 fill-current"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-slate-900 text-sm">ระบบธนาคารเลือด</h3>
+                    <p class="text-[0.65rem] text-crimson font-medium">โรงพยาบาลเขาฉกรรจ์</p>
+                  </div>
+                </div>
+                <button id="closeDrawerBtn" class="h-7 w-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs">✕</button>
+              </div>
+              <nav id="drawerMenu" class="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-160px)] pr-1"></nav>
+            </div>
+            <div class="pt-3 border-t border-slate-100">
+              <button onclick="openLogoutModal()" class="w-full flex items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-200 py-2 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">
+                <i data-lucide="log-out" class="w-4 h-4"></i> ออกจากระบบ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <main class="px-3 py-4 sm:px-5 lg:ml-48 lg:px-6">
+        
+        <!-- 1. DASHBOARD & MONTHLY STATS -->
+        <section id="dashboard" class="view active">
+          <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 text-crimson"></i> ภาพรวมคลังเลือด & สถิติรายเดือน
+              </h2>
+              <p class="text-xs font-medium text-slate-500">สรุปข้อมูลสถิติคลังเลือด ยอดรับเข้า-จ่ายออก-คงเหลือ รายเดือน</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm text-xs font-semibold text-slate-700">
+                <i data-lucide="calendar" class="w-4 h-4 text-crimson"></i>
+                <span>เลือกเดือน:</span>
+                <input id="statsMonthPicker" type="month" class="outline-none text-xs font-bold text-crimson bg-transparent cursor-pointer">
+              </div>
+              <button id="refreshBtn" class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson transition-all px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> รีเฟรช
+              </button>
+            </div>
+          </div>
+
+          <!-- Monthly Statistics Cards -->
+          <div class="mb-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            <!-- 1. Received in Month -->
+            <div class="rounded-2xl border border-blue-100 bg-white p-4 sm:p-5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-blue-800">ยอดรับเข้าในเดือน</p>
+                <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <i data-lucide="package-plus" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <p id="statMonthlyReceived" class="mt-2 text-3xl sm:text-4xl font-bold text-blue-600">0</p>
+              <p class="text-[0.7rem] text-slate-500 mt-1">ถุง (ยูนิตรับเข้า)</p>
+            </div>
+
+            <!-- 2. Dispensed / Used in Month -->
+            <div class="rounded-2xl border border-emerald-100 bg-white p-4 sm:p-5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-emerald-800">ยอดจ่าย/ใช้ไปในเดือน</p>
+                <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="truck" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <p id="statMonthlyDispensed" class="mt-2 text-3xl sm:text-4xl font-bold text-emerald-600">0</p>
+              <p class="text-[0.7rem] text-slate-500 mt-1">ถุง (จ่ายให้คนไข้แล้ว)</p>
+            </div>
+
+            <!-- 3. Current Remaining Stock -->
+            <div class="rounded-2xl border border-rose-100 bg-white p-4 sm:p-5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-crimson">เลือดคงเหลือพร้อมใช้</p>
+                <div class="w-7 h-7 rounded-lg bg-rose-50 text-crimson flex items-center justify-center">
+                  <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <p id="kpiAvailable" class="mt-2 text-3xl sm:text-4xl font-bold text-crimson">0</p>
+              <p class="text-[0.7rem] text-slate-500 mt-1">ถุง (สต็อกในคลัง)</p>
+            </div>
+
+            <!-- 4. Expiring / Expired Alert -->
+            <div class="rounded-2xl border border-amber-100 bg-white p-4 sm:p-5 shadow-sm">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-amber-800">ใกล้หมดอายุ / หมดอายุ</p>
+                <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="mt-2 flex items-baseline gap-2">
+                <p id="kpiExpiring" class="text-3xl sm:text-4xl font-bold text-amber-600">0</p>
+                <span class="text-xs font-semibold text-slate-400">/</span>
+                <p id="kpiExpired" class="text-2xl font-bold text-red-600">0</p>
+              </div>
+              <p class="text-[0.7rem] text-slate-500 mt-1"><span class="text-amber-700 font-bold">สีเหลือง: ≤ 10 วัน</span> | <span class="text-red-600 font-bold">สีแดง: หมดอายุ</span></p>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="mb-5 grid gap-4 lg:grid-cols-2">
+            <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+              <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2 mb-3">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-crimson"></i> สัดส่วนหมู่เลือดในคลัง (ABO)
+              </h3>
+              <div class="h-48 relative flex items-center justify-center">
+                <canvas id="bloodGroupChart"></canvas>
+              </div>
+            </div>
+
+            <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+              <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2 mb-3">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-crimson"></i> ปริมาณส่วนประกอบเลือดแยกตามชนิด
+              </h3>
+              <div class="h-48 relative flex items-center justify-center">
+                <canvas id="componentChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests & Inventory Table -->
+          <div class="grid gap-5 xl:grid-cols-[0.95fr_1.35fr]">
+            <!-- Pending Requests -->
+            <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+              <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                  <i data-lucide="inbox" class="w-5 h-5 text-crimson"></i> รายการคำขอเลือดที่รอจัดการ
+                </h3>
+                <span id="pendingCount" class="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-crimson border border-rose-100">0 รายการ</span>
+              </div>
+              <div id="pendingRequests" class="grid gap-3 max-h-[500px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- FEFO Blood Inventory Table -->
+            <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+              <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                  <i data-lucide="package-check" class="w-5 h-5 text-crimson"></i> สถานะคลังเลือด FEFO (First-Expired First-Out)
+                </h3>
+              </div>
+              <div id="bloodSummary" class="mb-4 grid grid-cols-4 gap-2 sm:gap-3"></div>
+              <div class="overflow-auto rounded-xl border border-slate-200">
+                <table class="w-full min-w-[640px] border-collapse text-xs">
+                  <thead class="sticky top-0 bg-slate-50 text-left uppercase text-slate-600 border-b border-slate-200">
+                    <tr>
+                      <th class="p-3 font-bold">Donation ID</th>
+                      <th class="p-3 font-bold">ชนิด</th>
+                      <th class="p-3 font-bold">หมู่เลือด</th>
+                      <th class="p-3 font-bold">วันหมดอายุ</th>
+                      <th class="p-3 font-bold">สถานะ</th>
+                      <th id="manageHeader" class="p-3 font-bold hidden">จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventoryTable" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. RECEIVING BLOOD (WITH BARCODE SCANNER) -->
+        <section id="receiving" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="barcode" class="w-6 h-6 text-crimson"></i> ยิง Barcode รับถุงเลือดเข้าระบบ (Receiving)
+              </h2>
+              <p class="text-xs text-slate-500">ยิง Barcode ด้วยเครื่องยิง หรือเปิดกล้องสแกน Barcode ที่ถุงเลือดเพื่อบันทึกเข้าระบบอัตโนมัติ</p>
+            </div>
+            <button id="openCameraScannerBtn" type="button" class="rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+              <i data-lucide="camera" class="w-4 h-4"></i> เปิดกล้องสแกน Barcode
+            </button>
+          </div>
+
+          <!-- Barcode Quick Scan Bar -->
+          <div class="mb-4 p-4 rounded-2xl bg-gradient-to-r from-rose-50 via-white to-amber-50 border-2 border-rose-200 shadow-sm flex flex-wrap items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-crimson text-white flex items-center justify-center shrink-0 shadow-md">
+              <i data-lucide="scan-line" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-[240px]">
+              <label class="block text-[0.75rem] font-bold text-slate-700 mb-1">🎯 ช่องยิง Barcode ด่วน (ใช้เครื่องยิง Barcode ยิงที่นี่ได้ทันที)</label>
+              <input id="quickBarcodeInput" class="w-full h-10 rounded-xl border border-rose-300 bg-white px-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-crimson outline-none placeholder-slate-400" placeholder="ยิง Barcode หรือพิมพ์ Donation ID เช่น 427.69.4.03603 แล้วกด Enter">
+            </div>
+            <button id="quickBarcodeBtn" class="h-10 rounded-xl bg-crimson hover:bg-crimsonlight px-4 text-xs font-bold text-white flex items-center gap-1.5 transition-all shadow-sm">
+              <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i> ดึงเข้าระบบ
+            </button>
+          </div>
+
+          <form id="bloodForm" class="grid gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-4">
+            <label class="field">
+              <span class="flex items-center gap-1"><i data-lucide="barcode" class="w-3.5 h-3.5 text-crimson"></i> Donation ID / Barcode *</span>
+              <input name="donationId" required placeholder="เช่น 427.69.4.03603">
+            </label>
+            <label class="field">
+              <span>ชนิดส่วนประกอบเลือด (Component) *</span>
+              <select name="component">
+                <option value="PRC">PRC (Packed Red Cells)</option>
+                <option value="LPRC">LPRC (Leukocyte-Poor Red Cells)</option>
+                <option value="FFP">FFP (Fresh Frozen Plasma)</option>
+                <option value="Platelet">Platelet (เกล็ดเลือด)</option>
+                <option value="Cryoprecipitate">Cryoprecipitate</option>
+                <option value="WB">WB (Whole Blood)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>ปริมาตร (Volume ml) *</span>
+              <input name="volume" type="number" required value="260">
+            </label>
+            <label class="field">
+              <span>หมู่เลือด (ABO) *</span>
+              <select name="abo"><option>O</option><option>A</option><option>B</option><option>AB</option></select>
+            </label>
+            <label class="field">
+              <span>Rh Type (Rh-D) *</span>
+              <select name="rh"><option value="Positive">Positive (+)</option><option value="Negative">Negative (-)</option></select>
+            </label>
+            <label class="field">
+              <span>วันที่เจาะ (Collection Date) *</span>
+              <input name="collectedAt" type="date" required>
+            </label>
+            <label class="field">
+              <span>วันหมดอายุ (Expiry Date) *</span>
+              <input name="expiresAt" type="date" required>
+            </label>
+            <label class="field">
+              <span>แหล่งที่มา (Source)</span>
+              <input name="source" placeholder="เช่น NATIONAL BLOOD CENTRE, รพร.สระแก้ว">
+            </label>
+            <label class="field sm:col-span-2">
+              <span>รูปถ่ายถุงเลือด / เอกสารแนบ (บีบอัดอัตโนมัติ)</span>
+              <input class="pt-1 text-xs" name="attachment" type="file" accept="image/*,.pdf">
+            </label>
+            <label class="field sm:col-span-2 xl:col-span-4">
+              <span>หมายเหตุ / ข้อมูลเพิ่มเติม</span>
+              <input name="note" placeholder="เช่น ผล Serology Non-reactive">
+            </label>
+            <div class="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-4 pt-4 border-t border-slate-100 mt-2">
+              <button class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white shadow-md flex items-center gap-2 text-xs" type="submit">
+                <i data-lucide="save" class="w-4 h-4"></i> <span id="bloodSubmitBtnText">บันทึกรับเข้าคลัง</span>
+              </button>
+              <button id="releaseBtn" class="rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2.5 font-bold transition-colors text-xs flex items-center gap-2" type="button">
+                <i data-lucide="unlock" class="w-4 h-4 text-emerald-600"></i> ปลดสถานะ Quarantine
+              </button>
+              <button id="resetBloodFormBtn" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 font-bold text-xs transition-colors" type="button">
+                ล้างฟอร์ม
+              </button>
+            </div>
+            <p id="bloodMessage" class="font-bold sm:col-span-2 xl:col-span-4 text-xs"></p>
+          </form>
+        </section>
+
+        <!-- 3. PATIENTS & NURSE BLOOD RESERVATION -->
+        <section id="patients" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="clipboard-check" class="w-6 h-6 text-crimson"></i> ระบบสั่งจองเลือดสำหรับพยาบาล / ทะเบียนผู้ป่วย (Blood Reservation)
+            </h2>
+            <p class="text-xs text-slate-500">พยาบาลสามารถล็อกอินเข้ามาสั่งจองเลือด ระบุหมู่เลือด ชนิด และจำนวนถุงที่ต้องการได้ทันที</p>
+          </div>
+          <form id="patientForm" class="grid gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-4">
+            <label class="field">
+              <span>HN ผู้ป่วย *</span>
+              <input name="hn" required placeholder="เช่น 69001">
+            </label>
+            <label class="field">
+              <span>ชื่อ-นามสกุล ผู้ป่วย *</span>
+              <input name="name" required placeholder="เช่น นายสมชาย ใจดี">
+            </label>
+            <label class="field">
+              <span>อายุ *</span>
+              <input name="age" required placeholder="เช่น 45">
+            </label>
+            <label class="field">
+              <span>หอผู้ป่วย (Ward) *</span>
+              <input name="ward" required placeholder="เช่น ICU, Ward A, ศัลยกรรม">
+            </label>
+            <label class="field">
+              <span>เตียง (Bed)</span>
+              <input name="bed" placeholder="เช่น 1, 3A">
+            </label>
+            <label class="field">
+              <span>ระดับความเร่งด่วน *</span>
+              <select name="priority">
+                <option value="Routine">Routine (ปกติ)</option>
+                <option value="Urgent">Urgent (ด่วน)</option>
+                <option value="Massive Transfusion">Massive Transfusion (วิกฤต/ฉุกเฉิน)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>ชนิดเลือดที่สั่งจอง (Component) *</span>
+              <select name="component">
+                <option value="PRC">PRC (Packed Red Cells)</option>
+                <option value="LPRC">LPRC (Leukocyte-Poor Red Cells)</option>
+                <option value="FFP">FFP (Fresh Frozen Plasma)</option>
+                <option value="Platelet">Platelet (เกล็ดเลือด)</option>
+                <option value="Cryoprecipitate">Cryoprecipitate</option>
+                <option value="WB">WB (Whole Blood)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>จำนวนถุงที่จอง (Units) *</span>
+              <input name="units" type="number" value="1" min="1" required>
+            </label>
+            <label class="field">
+              <span>พยาบาลผู้สั่งจอง / ตรวจสอบ *</span>
+              <input name="nurseName" required placeholder="ระบุชื่อพยาบาล">
+            </label>
+            <label class="field">
+              <span>แพทย์ผู้สั่งการรักษา *</span>
+              <input name="doctorName" required placeholder="ระบุชื่อแพทย์">
+            </label>
+            <label class="field sm:col-span-2">
+              <span>รูปถ่ายผู้ป่วย / ใบขอเลือด (บีบอัดอัตโนมัติ)</span>
+              <input class="pt-1 text-xs" name="attachment" type="file" accept="image/*,.pdf">
+            </label>
+            <label class="field sm:col-span-2 xl:col-span-4">
+              <span>ข้อบ่งชี้การให้เลือด (Indication)</span>
+              <input name="indication" placeholder="เช่น ภาวะซีดเฉียบพลัน, เตรียมผ่าตัด, Hb < 7">
+            </label>
+            
+            <div id="patientHistoryMsg" class="sm:col-span-2 xl:col-span-4 empty:hidden"></div>
+            
+            <div class="sm:col-span-2 xl:col-span-4 pt-4 border-t border-slate-100 mt-2 flex gap-3">
+              <button class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white shadow-md text-xs flex items-center gap-2" type="submit">
+                <i data-lucide="send" class="w-4 h-4"></i> ส่งคำสั่งจองเลือดไปยังห้องแล็บ
+              </button>
+              <button id="resetPatientFormBtn" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 font-bold text-xs" type="button">
+                ล้างฟอร์ม
+              </button>
+            </div>
+            <p id="patientMessage" class="font-bold sm:col-span-2 xl:col-span-4 text-xs"></p>
+          </form>
+        </section>
+
+        <!-- 4. BLOOD GROUPING -->
+        <section id="grouping" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="flask-conical" class="w-6 h-6 text-crimson"></i> บันทึกผลหมู่เลือดผู้ป่วย (Blood Grouping)
+            </h2>
+            <p class="text-xs text-slate-500">ทดสอบ Cell Grouping & Serum Grouping พร้อมระบบ Safety Lock ตรวจสอบประวัติ</p>
+          </div>
+          <form id="groupingForm" class="grid gap-5 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+            <label class="field">
+              <span>เลือกคำขอเลือดที่รอผล *</span>
+              <select name="requestId" id="groupingRequest" required></select>
+            </label>
+            
+            <div class="grid gap-4 xl:grid-cols-2">
+              <!-- Cell Grouping -->
+              <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                <h3 class="font-bold text-blue-800 text-sm mb-3 border-b border-blue-200 pb-2 flex items-center gap-2">
+                  <i data-lucide="test-tube" class="w-4 h-4"></i> Forward (Cell Grouping)
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <label class="field text-xs"><span>Anti-A</span><select name="antiA" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                  <label class="field text-xs"><span>Anti-B</span><select name="antiB" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                  <label class="field text-xs"><span>Anti-AB</span><select name="antiAB" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                  <label class="field text-xs"><span>Anti-D (Rh)</span><select name="antiD" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                </div>
+              </div>
+
+              <!-- Serum Grouping -->
+              <div class="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                <h3 class="font-bold text-amber-800 text-sm mb-3 border-b border-amber-200 pb-2 flex items-center gap-2">
+                  <i data-lucide="pipette" class="w-4 h-4"></i> Reverse (Serum Grouping)
+                </h3>
+                <div class="grid grid-cols-3 gap-2">
+                  <label class="field text-xs"><span>Cell A</span><select name="cellA" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                  <label class="field text-xs"><span>Cell B</span><select name="cellB" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                  <label class="field text-xs"><span>Cell O</span><select name="cellO" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <label class="field">
+                <span>สรุปหมู่โลหิต (ABO) *</span>
+                <select name="conclusionAbo" required>
+                  <option value="">-- เลือก --</option>
+                  <option value="O">O</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="AB">AB</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>สรุป Rh(D) *</span>
+                <select name="rh" required>
+                  <option value="">-- เลือก --</option>
+                  <option value="Positive">Positive (+)</option>
+                  <option value="Negative">Negative (-)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>ผู้ตรวจยืนยัน (Verified By) *</span>
+                <input name="verifiedBy" required placeholder="ชื่อนักเทคนิคการแพทย์">
+              </label>
+            </div>
+
+            <div class="pt-2">
+              <button class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white shadow-md text-xs flex items-center gap-2" type="submit">
+                <i data-lucide="check-check" class="w-4 h-4"></i> บันทึกผลและส่งต่อไปยัง Crossmatch
+              </button>
+            </div>
+            <p id="groupingMessage" class="font-bold text-xs"></p>
+          </form>
+        </section>
+
+        <!-- 5. CROSSMATCH (WITH A5 PRINT) -->
+        <section id="crossmatch" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="git-compare" class="w-6 h-6 text-crimson"></i> บันทึกผลความเข้ากันได้ (Crossmatch) & พิมพ์เอกสาร A5
+            </h2>
+            <p class="text-xs text-slate-500">ทดสอบความเข้ากันได้ของเลือดผู้ป่วยและผู้บริจาค พร้อมพิมพ์ใบกำกับขนาด A5</p>
+          </div>
+          <form id="crossmatchForm" class="grid gap-5 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="field sm:col-span-2">
+                <span>คำขอเลือดที่พร้อมทำ Crossmatch *</span>
+                <select name="requestId" id="crossmatchRequest" required></select>
+              </label>
+              <label class="field sm:col-span-2">
+                <span>ถุงเลือดในคลังที่เข้ากันได้ (Compatible Units) *</span>
+                <select name="donationId" id="compatibleUnits" required></select>
+              </label>
+            </div>
+
+            <div class="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
+              <h3 class="font-bold text-crimson text-sm mb-3 border-b border-rose-200 pb-2 flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i> ยืนยันข้อมูลถุงเลือด (Donor Verification)
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="field text-xs"><span>หมู่เลือด ABO</span><select name="unitAbo" required><option value="">-- เลือก --</option><option>O</option><option>A</option><option>B</option><option>AB</option></select></label>
+                <label class="field text-xs"><span>หมู่เลือด Rh(D)</span><select name="unitRh" required><option value="">-- เลือก --</option><option value="Positive">Positive</option><option value="Negative">Negative</option></select></label>
+                <label class="field text-xs"><span>ชนิดเลือด</span><select name="unitComponent" required><option value="">-- เลือก --</option><option>PRC</option><option>LPRC</option><option>FFP</option><option>Platelet</option><option>Cryoprecipitate</option><option>WB</option></select></label>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <h3 class="font-bold text-blue-800 text-sm mb-3 border-b border-blue-200 pb-2 flex items-center gap-2">
+                <i data-lucide="microscope" class="w-4 h-4"></i> ผลการทดสอบปฏิกิริยา Crossmatch
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="field text-xs"><span>RT (Room Temp)</span><select name="rt" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                <label class="field text-xs"><span>37 °C</span><select name="inc37" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+                <label class="field text-xs"><span>IAT (Indirect Antiglobulin)</span><select name="iat" required><option value="">-</option><option>Negative</option><option>1+</option><option>2+</option><option>3+</option><option>4+</option></select></label>
+              </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <label class="field">
+                <span>สรุปผล Crossmatch *</span>
+                <select name="conclusion" required>
+                  <option value="">-- เลือก --</option>
+                  <option value="Compatible">Compatible (เข้ากันได้)</option>
+                  <option value="Incompatible">Incompatible (เข้ากันไม่ได้)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>ผู้ทดสอบ (Tester) *</span>
+                <input name="tester" required placeholder="ชื่อผู้ทดสอบ">
+              </label>
+              <label class="field">
+                <span>ผู้ตรวจสอบ (Checker / Double Check) *</span>
+                <input name="checker" required placeholder="ชื่อผู้ตรวจทาน">
+              </label>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100">
+              <button id="approveCrossmatch" class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white disabled:opacity-50 shadow-md text-xs flex items-center gap-2" type="submit">
+                <i data-lucide="badge-check" class="w-4 h-4"></i> อนุมัติผล (Approve Crossmatch) & สร้าง Tag A5
+              </button>
+            </div>
+            <p id="crossmatchMessage" class="font-bold text-xs"></p>
+          </form>
+          
+          <div id="tagPreview" class="mt-5"></div>
+        </section>
+
+        <!-- 6. DISPENSE -->
+        <section id="dispense" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="truck" class="w-6 h-6 text-crimson"></i> 3-Step Verification & จ่ายเลือด (Dispense)
+            </h2>
+            <p class="text-xs text-slate-500">ตรวจสอบความถูกต้อง 3 จุด (HN + Donation ID + QR Tag) ก่อนจ่ายเลือดออกจากคลัง</p>
+          </div>
+          <form id="dispenseForm" class="grid gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-5">
+            <label class="field">
+              <span>1. HN ผู้ป่วย *</span>
+              <input name="hn" required placeholder="เช่น 69001">
+            </label>
+            <label class="field">
+              <span>2. Donation ID (ถุงเลือด) *</span>
+              <input name="donationId" required placeholder="เช่น 427.69.4.03603">
+            </label>
+            <label class="field">
+              <span>3. สแกน QR / Tag Code *</span>
+              <input name="tagCode" required placeholder="HN|DonationID">
+            </label>
+            <label class="field">
+              <span>ชื่อผู้มารับเลือด *</span>
+              <input name="receiver" required placeholder="ชื่อพยาบาล / จนท.รับเลือด">
+            </label>
+            <label class="field">
+              <span>ชื่อผู้จ่ายเลือด *</span>
+              <input name="dispenser" required placeholder="ชื่อเจ้าหน้าที่ธนาคารเลือด">
+            </label>
+            
+            <div class="sm:col-span-2 xl:col-span-5 pt-4 border-t border-slate-100 mt-2 flex gap-3">
+              <button class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white shadow-md text-xs flex items-center gap-2" type="submit">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> ตรวจสอบ 3 จุดและบันทึกจ่ายเลือด
+              </button>
+              <button id="resetDispenseBtn" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 font-bold text-xs" type="button">
+                ล้างฟอร์ม
+              </button>
+            </div>
+            <p id="dispenseMessage" class="font-bold sm:col-span-2 xl:col-span-5 text-xs"></p>
+          </form>
+        </section>
+
+        <!-- 7. ATTACHMENTS -->
+        <section id="attachments" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="paperclip" class="w-6 h-6 text-crimson"></i> อัปโหลดและจัดการเอกสารส่วนกลาง (Storage)
+            </h2>
+            <p class="text-xs text-slate-500">อัปโหลดไฟล์/รูปภาพไปยัง Supabase Storage พร้อมระบบบีบอัดไฟล์อัตโนมัติ</p>
+          </div>
+          <form id="uploadForm" class="grid gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-4">
+            <label class="field">
+              <span>หมวดหมู่เอกสาร</span>
+              <select name="ownerType">
+                <option value="BloodInventory">BloodInventory (ถุงเลือด)</option>
+                <option value="Patients">Patients (ผู้ป่วย)</option>
+                <option value="Requests">Requests (คำขอเลือด)</option>
+                <option value="General">General (ทั่วไป)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>รหัสอ้างอิง (เช่น Donation ID หรือ HN)</span>
+              <input name="ownerId" placeholder="เช่น 427.69.4.03603">
+            </label>
+            <label class="field sm:col-span-2">
+              <span>เลือกไฟล์เอกสาร / รูปภาพ (บีบอัดอัตโนมัติ) *</span>
+              <input class="pt-1 text-xs" name="attachment" type="file" required accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+            </label>
+            <div class="sm:col-span-2 xl:col-span-4 pt-4 border-t border-slate-100 mt-2">
+              <button class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson px-6 py-2.5 font-bold text-white shadow-md text-xs flex items-center gap-2" type="submit">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i> อัปโหลดไฟล์เข้าสู่ Supabase Storage
+              </button>
+            </div>
+            <p id="uploadMessage" class="font-bold sm:col-span-2 xl:col-span-4 text-xs"></p>
+          </form>
+          <div id="uploadResult" class="mt-4"></div>
+        </section>
+
+        <!-- 8. USER MANAGEMENT (Admin only) -->
+        <section id="users" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="users" class="w-6 h-6 text-crimson"></i> การจัดการบัญชีผู้ใช้งาน (User Management)
+            </h2>
+            <p class="text-xs text-slate-500">จัดการข้อมูลเจ้าหน้าที่ รหัสผ่าน และระดับสิทธิ์ในระบบ (ADMIN, MT, NURSE, DOCTOR)</p>
+          </div>
+          <div class="grid gap-5 xl:grid-cols-[380px_1fr]">
+            <form id="userForm" class="grid gap-3 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 self-start">
+              <label class="field">
+                <span>ชื่อผู้ใช้ระบบ (Username) *</span>
+                <input name="username" required placeholder="เช่น nurse02, mt02">
+              </label>
+              <label class="field">
+                <span>รหัสผ่าน (Password) *</span>
+                <input name="password" required placeholder="กำหนดรหัสผ่าน">
+              </label>
+              <label class="field">
+                <span>ชื่อ-นามสกุล เจ้าหน้าที่ *</span>
+                <input name="fullName" required placeholder="เช่น พว. สุดา ชำนาญการ">
+              </label>
+              <label class="field">
+                <span>ระดับสิทธิ์การใช้งาน *</span>
+                <select name="role">
+                  <option value="ADMIN">ADMIN (ผู้ดูแลระบบ)</option>
+                  <option value="MT">MT (นักเทคนิคการแพทย์)</option>
+                  <option value="NURSE">NURSE (พยาบาล/ผู้สั่งจองเลือด)</option>
+                  <option value="DOCTOR">DOCTOR (แพทย์)</option>
+                  <option value="USER">USER (ผู้ใช้งานทั่วไป)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>สถานะบัญชี *</span>
+                <select name="active">
+                  <option value="TRUE">เปิดใช้งาน (Active)</option>
+                  <option value="FALSE">ระงับการใช้งาน (Inactive)</option>
+                </select>
+              </label>
+              <div class="flex gap-2 mt-3">
+                <button class="flex-1 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2.5 font-bold text-white shadow-md text-xs flex items-center justify-center gap-2" type="submit">
+                  <i data-lucide="user-check" class="w-4 h-4"></i> บันทึกข้อมูล
+                </button>
+                <button id="resetUserFormBtn" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2.5 font-bold text-xs" type="button">
+                  ล้าง
+                </button>
+              </div>
+              <p id="userMessage" class="font-bold text-xs"></p>
+            </form>
+            
+            <div class="overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <table class="w-full min-w-[600px] text-xs text-slate-700">
+                <thead class="bg-rose-50 text-left uppercase text-crimson border-b border-rose-100">
+                  <tr>
+                    <th class="p-3.5 font-bold">Username</th>
+                    <th class="p-3.5 font-bold">ชื่อ-นามสกุล</th>
+                    <th class="p-3.5 font-bold">Role</th>
+                    <th class="p-3.5 font-bold">สถานะ</th>
+                    <th class="p-3.5 font-bold">เข้าสู่ระบบล่าสุด</th>
+                    <th class="p-3.5 font-bold">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTable" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. AUDIT TRAIL (Admin only) -->
+        <section id="audit" class="view">
+          <div class="mb-4 border-b border-slate-200 pb-2">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="history" class="w-6 h-6 text-crimson"></i> บันทึกประวัติการใช้งาน (Audit Trail)
+            </h2>
+            <p class="text-xs text-slate-500">ประวัติกิจกรรมการทำงานทั้งหมดในระบบ Real-time Logs</p>
+          </div>
+          <div class="overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full min-w-[700px] border-collapse text-xs text-slate-700">
+              <thead class="sticky top-0 bg-rose-50 text-left uppercase text-crimson border-b border-rose-100">
+                <tr>
+                  <th class="p-3.5 font-bold">วัน-เวลา</th>
+                  <th class="p-3.5 font-bold">ผู้ดำเนินการ</th>
+                  <th class="p-3.5 font-bold">ประเภทกิจกรรม</th>
+                  <th class="p-3.5 font-bold">รายละเอียด (Log)</th>
+                </tr>
+              </thead>
+              <tbody id="auditTable" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Bottom Nav (Mobile) -->
+      <nav id="bottomNav" class="no-print fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white/95 backdrop-blur-lg shadow-[0_-4px_20px_rgba(153,27,27,0.08)] lg:hidden"></nav>
+    </div>
+
+    <!-- Camera Barcode Scanner Modal -->
+    <div id="cameraScannerModal" class="fixed inset-0 z-[120] hidden place-items-center bg-slate-900/70 backdrop-blur-sm p-4">
+      <div class="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl border border-slate-100">
+        <div class="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+          <div class="flex items-center gap-2 text-crimson font-bold text-sm">
+            <i data-lucide="scan" class="w-5 h-5"></i> กล้องสแกน Barcode ถุงเลือด
+          </div>
+          <button id="closeCameraScannerBtn" class="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">✕</button>
+        </div>
+        <div id="qr-reader" class="overflow-hidden rounded-2xl border border-slate-200 bg-black min-h-[250px]"></div>
+        <p class="text-[0.75rem] text-slate-500 text-center mt-3">นำกล้องส่องไปที่ Barcode บนถุงเลือดเพื่ออ่านรหัสอัตโนมัติ</p>
+      </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-[110] hidden place-items-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center gap-3 text-crimson mb-2">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          <h3 class="text-lg font-bold text-slate-900">ยืนยันการออกจากระบบ?</h3>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">ข้อมูลและตัวกรองต่างๆ จะถูกล้าง และกลับสู่หน้าเข้าสู่ระบบ</p>
+        <div class="mt-5 flex justify-end gap-2.5">
+          <button id="cancelLogout" class="rounded-xl bg-white border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">ยกเลิก</button>
+          <button id="confirmLogout" class="rounded-xl bg-crimson px-4 py-2 text-xs font-bold text-white hover:bg-crimsonlight transition-colors">ยืนยัน ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+      // Global App State
+      var currentUser = null;
+      var appData = {
+        inventory: [],
+        patients: [],
+        requests: [],
+        crossmatches: [],
+        audit: [],
+        settings: [],
+        users: []
+      };
+
+      var bloodGroupChartInstance = null;
+      var componentChartInstance = null;
+      var html5QrCodeScanner = null;
+
+      var menus = [
+        { id: 'dashboard', label: 'ภาพรวม & สถิติ', icon: 'layout-dashboard', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE', 'USER'], mobile: true },
+        { id: 'receiving', label: 'รับเลือด / Barcode', icon: 'barcode', roles: ['ADMIN', 'MT'], mobile: true },
+        { id: 'patients', label: 'จองเลือด / ผู้ป่วย', icon: 'clipboard-check', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE'], mobile: true },
+        { id: 'grouping', label: 'Blood Grouping', icon: 'flask-conical', roles: ['ADMIN', 'MT'] },
+        { id: 'crossmatch', label: 'Crossmatch (A5)', icon: 'git-compare', roles: ['ADMIN', 'MT'], mobile: true },
+        { id: 'dispense', label: 'จ่ายเลือด (3-Step)', icon: 'truck', roles: ['ADMIN', 'MT'], mobile: true },
+        { id: 'attachments', label: 'เอกสารแนบ', icon: 'paperclip', roles: ['ADMIN', 'MT'] },
+        { id: 'users', label: 'จัดการผู้ใช้งาน', icon: 'users', roles: ['ADMIN'], admin: true },
+        { id: 'audit', label: 'Audit Trail', icon: 'history', roles: ['ADMIN'], admin: true },
+      ];
+
+      // Document Ready
+      document.addEventListener('DOMContentLoaded', function () {
+        initSupabaseClient();
+        setDefaultDates();
+        setDefaultStatsMonth();
+        bindEvents();
+        renderMenus();
+        if (window.lucide) lucide.createIcons();
+
+        var savedUser = localStorage.getItem('bb_current_user');
+        if (savedUser) {
+          try {
+            currentUser = JSON.parse(savedUser);
+            applyAuthenticatedUser();
+            loadAllData();
+          } catch(e) {
+            localStorage.removeItem('bb_current_user');
+          }
+        }
+      });
+
+      function initSupabaseClient() {
+        if (!sbClient) {
+          if (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined') {
+            if (!SUPABASE_URL.includes('YOUR_SUPABASE_PROJECT_ID')) {
+              try {
+                sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              } catch (e) {
+                console.error('Failed to initialize Supabase client:', e);
+              }
+            }
+          }
+        }
+
+        var connAlert = byId('supabaseConnAlert');
+        if (!sbClient) {
+          if (connAlert) connAlert.classList.remove('hidden');
+        } else {
+          if (connAlert) connAlert.classList.add('hidden');
+        }
+      }
+
+      function bindEvents() {
+        byId('loginForm').addEventListener('submit', login);
+        byId('logoutTopBtn').addEventListener('click', openLogoutModal);
+        byId('cancelLogout').addEventListener('click', closeLogoutModal);
+        byId('confirmLogout').addEventListener('click', logout);
+        byId('refreshBtn').addEventListener('click', loadAllData);
+        byId('bloodForm').addEventListener('submit', submitBloodUnit);
+        byId('resetBloodFormBtn').addEventListener('click', resetBloodForm);
+        byId('patientForm').addEventListener('submit', submitPatientRequest);
+        byId('resetPatientFormBtn').addEventListener('click', resetPatientForm);
+        byId('groupingForm').addEventListener('submit', submitGrouping);
+        byId('crossmatchForm').addEventListener('submit', submitCrossmatch);
+        byId('crossmatchForm').addEventListener('change', updateCrossmatchSafety);
+        byId('crossmatchRequest').addEventListener('change', renderCompatibleUnits);
+        byId('releaseBtn').addEventListener('click', releaseQuarantine);
+        byId('dispenseForm').addEventListener('submit', submitDispense);
+        byId('resetDispenseBtn').addEventListener('click', function () { byId('dispenseForm').reset(); byId('dispenseMessage').textContent = ''; });
+        byId('uploadForm').addEventListener('submit', submitUpload);
+        byId('userForm').addEventListener('submit', submitUser);
+        byId('resetUserFormBtn').addEventListener('click', function () { byId('userForm').reset(); byId('userMessage').textContent = ''; });
+        byId('globalSearch').addEventListener('input', globalSearch);
+        byId('patientForm').elements.hn.addEventListener('blur', showPatientHistory);
+        
+        // Drawer Menu Toggle
+        byId('toggleDrawerBtn').addEventListener('click', toggleDrawer);
+        byId('closeDrawerBtn').addEventListener('click', closeDrawer);
+        byId('drawerBackdrop').addEventListener('click', closeDrawer);
+
+        // Barcode Quick Scan Events
+        byId('quickBarcodeBtn').addEventListener('click', handleQuickBarcode);
+        byId('quickBarcodeInput').addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleQuickBarcode();
+          }
+        });
+
+        // Camera Scanner Modal Events
+        byId('openCameraScannerBtn').addEventListener('click', openCameraScanner);
+        byId('closeCameraScannerBtn').addEventListener('click', closeCameraScanner);
+
+        // Stats Month Change
+        byId('statsMonthPicker').addEventListener('change', renderDashboard);
+
+        // Auto-calculate Expiry date on collectedAt or component change
+        var form = byId('bloodForm');
+        form.elements.collectedAt.addEventListener('change', autoCalculateExpiry);
+        form.elements.component.addEventListener('change', autoCalculateExpiry);
+      }
+
+      function toggleDrawer() {
+        var drawer = byId('sidebarDrawer');
+        if (drawer.classList.contains('hidden')) {
+          drawer.classList.remove('hidden');
+        } else {
+          drawer.classList.add('hidden');
+        }
+      }
+      function closeDrawer() {
+        byId('sidebarDrawer').classList.add('hidden');
+      }
+
+      function setDefaultStatsMonth() {
+        var now = new Date();
+        var ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        var picker = byId('statsMonthPicker');
+        if (picker) picker.value = ym;
+      }
+
+      function autoCalculateExpiry() {
+        var form = byId('bloodForm');
+        var collected = form.elements.collectedAt.value;
+        if (!collected) return;
+        var comp = form.elements.component.value;
+        var d = new Date(collected);
+        var addDays = 35; // Default PRC
+        if (comp === 'Platelet') addDays = 5;
+        else if (comp === 'FFP' || comp === 'Cryoprecipitate') addDays = 365;
+        else if (comp === 'LPRC' || comp === 'PRC') addDays = 35;
+        else if (comp === 'WB') addDays = 28;
+
+        d.setDate(d.getDate() + addDays);
+        form.elements.expiresAt.value = formatDate(d);
+      }
+
+      // Quick Barcode Scanning Handler
+      function handleQuickBarcode() {
+        var input = byId('quickBarcodeInput');
+        var code = input.value.trim().toUpperCase();
+        if (!code) return;
+
+        showView('receiving');
+        var form = byId('bloodForm');
+        form.elements.donationId.value = code;
+
+        // Check if blood unit already exists in inventory
+        var existing = findBy(appData.inventory, 'DonationID', code);
+        if (existing) {
+          editBloodUnit(code);
+          message('bloodMessage', 'พบข้อมูลถุงเลือดเดิมในระบบ: รหัส ' + code, true);
+        } else {
+          // New unit, focus volume or component
+          form.elements.volume.focus();
+          message('bloodMessage', 'ยิง Barcode สำเร็จ: รหัส ' + code + ' (กรอกข้อมูลเพิ่มเติมเพื่อบันทึก)', true);
+        }
+        input.value = '';
+      }
+
+      // Camera Barcode Scanner using Html5Qrcode
+      function openCameraScanner() {
+        byId('cameraScannerModal').classList.remove('hidden');
+        byId('cameraScannerModal').classList.add('grid');
+
+        try {
+          if (!html5QrCodeScanner) {
+            html5QrCodeScanner = new Html5Qrcode("qr-reader");
+          }
+          html5QrCodeScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 280, height: 180 } },
+            function (decodedText) {
+              closeCameraScanner();
+              byId('quickBarcodeInput').value = decodedText;
+              handleQuickBarcode();
+            },
+            function (errorMessage) {
+              // Ignore scan frame misses
+            }
+          ).catch(function (err) {
+            alert('ไม่สามารถเปิดกล้องได้: ' + err);
+            closeCameraScanner();
+          });
+        } catch (e) {
+          alert('เกิดข้อผิดพลาดในการเปิดกล้อง: ' + e.message);
+          closeCameraScanner();
+        }
+      }
+
+      function closeCameraScanner() {
+        if (html5QrCodeScanner) {
+          html5QrCodeScanner.stop().then(function () {
+            byId('cameraScannerModal').classList.add('hidden');
+            byId('cameraScannerModal').classList.remove('grid');
+          }).catch(function () {
+            byId('cameraScannerModal').classList.add('hidden');
+            byId('cameraScannerModal').classList.remove('grid');
+          });
+        } else {
+          byId('cameraScannerModal').classList.add('hidden');
+          byId('cameraScannerModal').classList.remove('grid');
+        }
+      }
+
+      // Client-side Image Compression Helper (Canvas API)
+      async function compressImageFile(file, maxWidth, maxHeight, quality) {
+        maxWidth = maxWidth || 1000;
+        maxHeight = maxHeight || 1000;
+        quality = quality || 0.75;
+        if (!file || !file.type.startsWith('image/')) {
+          return file;
+        }
+        return new Promise(function (resolve) {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = function (event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function () {
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > maxWidth) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                }
+              } else {
+                if (height > maxHeight) {
+                  width = Math.round((width * maxHeight) / height);
+                  height = maxHeight;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob(function (blob) {
+                if (blob) {
+                  const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                    type: 'image/webp',
+                    lastModified: Date.now(),
+                  });
+                  resolve(compressedFile);
+                } else {
+                  resolve(file);
+                }
+              }, 'image/webp', quality);
+            };
+            img.onerror = function () { resolve(file); };
+          };
+          reader.onerror = function () { resolve(file); };
+        });
+      }
+
+      // Upload file directly to Supabase Storage
+      async function uploadToStorage(file, folder) {
+        folder = folder || 'uploads';
+        if (!sbClient || !file) return null;
+        try {
+          const compressed = await compressImageFile(file);
+          const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = folder + '/' + Date.now() + '_' + cleanName;
+
+          const { data, error } = await sbClient.storage
+            .from('bloodbank-storage')
+            .upload(filePath, compressed, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (error) throw error;
+
+          const { data: urlData } = sbClient.storage
+            .from('bloodbank-storage')
+            .getPublicUrl(filePath);
+
+          return {
+            fileId: filePath,
+            publicUrl: urlData ? urlData.publicUrl : '',
+            fileName: file.name,
+            mimeType: compressed.type || file.type
+          };
+        } catch (e) {
+          console.warn('Storage upload error:', e);
+          return null;
+        }
+      }
+
+      // Login
+      async function login(e) {
+        e.preventDefault();
+        var form = byId('loginForm');
+        var username = form.elements.username.value.trim();
+        var password = form.elements.password.value.trim();
+
+        if (!username || !password) {
+          byId('loginMessage').textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+          return;
+        }
+
+        startLoading('กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...');
+        try {
+          if (sbClient) {
+            const { data, error } = await sbClient
+              .from('users')
+              .select('*')
+              .eq('username', username)
+              .eq('password', password)
+              .eq('active', 'TRUE')
+              .single();
+
+            if (error || !data) {
+              throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีถูกระงับ');
+            }
+
+            currentUser = {
+              Username: data.username,
+              FullName: data.full_name,
+              Role: data.role,
+              Active: data.active
+            };
+
+            await sbClient.from('users').update({ last_login_at: new Date().toISOString() }).eq('username', username);
+            await writeAuditLog(username, 'Login', 'เข้าสู่ระบบสำเร็จ (' + data.role + ')');
+          } else {
+            if (username === 'admin' && password === '1234') {
+              currentUser = { Username: 'admin', FullName: 'ผู้ดูแลระบบสูงสุด', Role: 'ADMIN', Active: 'TRUE' };
+            } else if (username === 'nurse01' && password === 'nurse1234') {
+              currentUser = { Username: 'nurse01', FullName: 'พว. กานดา พยาบาลวิชาชีพ', Role: 'NURSE', Active: 'TRUE' };
+            } else {
+              throw new Error('ยังไม่ได้เชื่อมต่อ Supabase: กรุณากรอก config.js หรือใช้ admin / 1234');
+            }
+          }
+
+          localStorage.setItem('bb_current_user', JSON.stringify(currentUser));
+          applyAuthenticatedUser();
+          await loadAllData();
+          
+          if (currentUser.Role === 'NURSE') {
+            showView('patients');
+          } else {
+            showView('dashboard');
+          }
+          byId('loginMessage').textContent = '';
+        } catch (err) {
+          byId('loginMessage').textContent = err.message || err;
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function applyAuthenticatedUser() {
+        if (!currentUser) return;
+        document.body.className = 'auth role-' + currentUser.Role + ' bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900';
+        byId('currentUserName').textContent = currentUser.FullName || currentUser.Username;
+        byId('currentUserRole').textContent = 'สิทธิ์: ' + currentUser.Role;
+        renderMenus();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function logout() {
+        currentUser = null;
+        localStorage.removeItem('bb_current_user');
+        appData = { inventory: [], patients: [], requests: [], crossmatches: [], audit: [], settings: [], users: [] };
+        byId('loginForm').reset();
+        closeLogoutModal();
+        closeDrawer();
+        document.body.className = 'guest bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900';
+        showView('dashboard');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function openLogoutModal() { byId('logoutModal').classList.remove('hidden'); byId('logoutModal').classList.add('grid'); }
+      function closeLogoutModal() { byId('logoutModal').classList.add('hidden'); byId('logoutModal').classList.remove('grid'); }
+
+      // Load All Data from Supabase
+      async function loadAllData() {
+        if (!currentUser) return;
+        startLoading('กำลังดึงข้อมูลล่าสุดจาก Supabase...');
+        try {
+          if (sbClient) {
+            await applyExpiryHardStop();
+
+            const [invRes, patRes, reqRes, xmRes, audRes, setRes, usrRes] = await Promise.all([
+              sbClient.from('blood_inventory').select('*').order('expires_at', { ascending: true }),
+              sbClient.from('patients').select('*').order('created_at', { ascending: false }),
+              sbClient.from('requests').select('*').order('created_at', { ascending: false }),
+              sbClient.from('crossmatches').select('*').order('verified_at', { ascending: false }),
+              sbClient.from('audit_trail').select('*').order('at', { ascending: false }).limit(100),
+              sbClient.from('settings').select('*'),
+              sbClient.from('users').select('*').order('created_at', { ascending: false })
+            ]);
+
+            appData.inventory = (invRes.data || []).map(mapInventoryRow);
+            appData.patients = (patRes.data || []).map(mapPatientRow);
+            appData.requests = (reqRes.data || []).map(mapRequestRow);
+            appData.crossmatches = (xmRes.data || []).map(mapCrossmatchRow);
+            appData.audit = (audRes.data || []).map(mapAuditRow);
+            appData.settings = setRes.data || [];
+            appData.users = (usrRes.data || []).map(mapUserRow);
+          }
+          renderAll();
+        } catch (err) {
+          console.error('Error loading data:', err);
+          alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      async function applyExpiryHardStop() {
+        if (!sbClient) return;
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          await sbClient
+            .from('blood_inventory')
+            .update({ status: 'discard', updated_at: new Date().toISOString() })
+            .lt('expires_at', today)
+            .in('status', ['available', 'quarantine', 'reserved']);
+        } catch (e) {
+          console.warn('Expiry hard-stop check:', e);
+        }
+      }
+
+      function mapInventoryRow(r) {
+        return {
+          DonationID: r.donation_id,
+          Component: r.component,
+          Volume: r.volume,
+          ABO: r.abo,
+          Rh: r.rh,
+          CollectedAt: r.collected_at,
+          ExpiresAt: r.expires_at,
+          Markers: r.markers,
+          Status: r.status,
+          Source: r.source,
+          Note: r.note,
+          AttachmentUrl: r.attachment_url,
+          AttachmentFileId: r.attachment_file_id,
+          ImageLh3Url: r.image_lh3_url,
+          ReceivedAt: r.received_at,
+          UpdatedAt: r.updated_at
+        };
+      }
+
+      function mapPatientRow(r) {
+        return {
+          HN: r.hn,
+          FullName: r.full_name,
+          Age: r.age,
+          Ward: r.ward,
+          Bed: r.bed,
+          HistoricalABO: r.historical_abo,
+          HistoricalRh: r.historical_rh,
+          PhotoUrl: r.photo_url,
+          PhotoFileId: r.photo_file_id,
+          ImageLh3Url: r.image_lh3_url,
+          CreatedAt: r.created_at,
+          UpdatedAt: r.updated_at
+        };
+      }
+
+      function mapRequestRow(r) {
+        return {
+          RequestID: r.request_id,
+          HN: r.hn,
+          Component: r.component,
+          Units: r.units,
+          Priority: r.priority,
+          Indication: r.indication,
+          Status: r.status,
+          CellType: r.cell_type,
+          SerumType: r.serum_type,
+          PatientABO: r.patient_abo,
+          PatientRh: r.patient_rh,
+          GroupingAlert: r.grouping_alert,
+          GroupingVerifiedBy: r.grouping_verified_by,
+          GroupingVerifiedAt: r.grouping_verified_at,
+          NurseName: r.nurse_name,
+          DoctorName: r.doctor_name,
+          CreatedAt: r.created_at,
+          UpdatedAt: r.updated_at
+        };
+      }
+
+      function mapCrossmatchRow(r) {
+        return {
+          CrossmatchID: r.crossmatch_id,
+          RequestID: r.request_id,
+          HN: r.hn,
+          DonationID: r.donation_id,
+          Major: r.major,
+          Minor: r.minor,
+          AutoControl: r.auto_control,
+          Result: r.result,
+          TagCode: r.tag_code,
+          VerifiedBy: r.verified_by,
+          VerifiedAt: r.verified_at,
+          DispenseStatus: r.dispense_status,
+          Receiver: r.receiver,
+          DispensedAt: r.dispensed_at,
+          ColdChainDueAt: r.cold_chain_due_at,
+          UpdatedAt: r.updated_at
+        };
+      }
+
+      function mapAuditRow(r) {
+        return {
+          AuditID: r.audit_id,
+          At: r.at ? new Date(r.at).toLocaleString('th-TH') : '-',
+          User: r.user_name,
+          Action: r.action,
+          Detail: r.detail
+        };
+      }
+
+      function mapUserRow(r) {
+        return {
+          Username: r.username,
+          FullName: r.full_name,
+          Role: r.role,
+          Active: r.active,
+          CreatedAt: r.created_at,
+          UpdatedAt: r.updated_at,
+          LastLoginAt: r.last_login_at ? new Date(r.last_login_at).toLocaleString('th-TH') : '-'
+        };
+      }
+
+      async function writeAuditLog(user, action, detail) {
+        if (!sbClient) return;
+        try {
+          const auditId = 'AUD-' + Date.now();
+          await sbClient.from('audit_trail').insert({
+            audit_id: auditId,
+            at: new Date().toISOString(),
+            user_name: user || 'system',
+            action: action,
+            detail: detail
+          });
+        } catch (e) {
+          console.warn('Audit log error:', e);
+        }
+      }
+
+      // 1. Blood Unit Submit
+      async function submitBloodUnit(e) {
+        e.preventDefault();
+        var form = byId('bloodForm');
+        var donationId = form.elements.donationId.value.trim().toUpperCase();
+        var component = form.elements.component.value;
+        var volume = parseFloat(form.elements.volume.value) || 260;
+        var abo = form.elements.abo.value;
+        var rh = form.elements.rh.value;
+        var collectedAt = form.elements.collectedAt.value;
+        var expiresAt = form.elements.expiresAt.value;
+        var source = form.elements.source.value.trim();
+        var note = form.elements.note.value.trim();
+        var fileInput = form.elements.attachment;
+
+        if (!donationId) {
+          alert('กรุณาระบุ Donation ID');
+          return;
+        }
+
+        if (daysUntil(expiresAt) < 0) {
+          alert('วันหมดอายุน้อยกว่าวันปัจจุบัน ระบบไม่อนุญาตให้บันทึก');
+          return;
+        }
+
+        startLoading(window.editingBloodUnitId ? 'กำลังอัปเดตข้อมูลถุงเลือด...' : 'กำลังบันทึกรับถุงเลือดและอัปโหลดภาพ...');
+        try {
+          let uploadInfo = null;
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            uploadInfo = await uploadToStorage(fileInput.files[0], 'blood_units');
+          }
+
+          let status = 'available';
+          const isEdit = !!window.editingBloodUnitId;
+
+          const record = {
+            donation_id: donationId,
+            component: component,
+            volume: volume,
+            abo: abo,
+            rh: rh,
+            collected_at: collectedAt || null,
+            expires_at: expiresAt,
+            markers: 'negative',
+            status: status,
+            source: source,
+            note: note,
+            updated_at: new Date().toISOString()
+          };
+
+          if (uploadInfo) {
+            record.attachment_url = uploadInfo.publicUrl;
+            record.attachment_file_id = uploadInfo.fileId;
+            record.image_lh3_url = uploadInfo.publicUrl;
+          }
+
+          if (sbClient) {
+            if (isEdit) {
+              const { error } = await sbClient.from('blood_inventory').update(record).eq('donation_id', donationId);
+              if (error) throw error;
+              await writeAuditLog(currentUser.Username, 'แก้ไขข้อมูลถุงเลือด', donationId + ' ' + component + ' ' + abo + ' ' + rh);
+            } else {
+              record.received_at = new Date().toISOString();
+              const { error } = await sbClient.from('blood_inventory').insert(record);
+              if (error) throw error;
+              await writeAuditLog(currentUser.Username, 'รับเลือดเข้า', donationId + ' ' + component + ' ' + abo + ' ' + rh);
+            }
+          }
+
+          resetBloodForm();
+          const expDays = daysUntil(expiresAt);
+          let successMsg = isEdit ? 'อัปเดตข้อมูลถุงเลือดเรียบร้อย' : 'บันทึกรับเลือดเข้าคลังเรียบร้อย';
+          if (expDays >= 0 && expDays <= 10) {
+            successMsg += ' ⚠️ แจ้งเตือน: เลือดใกล้หมดอายุ (เหลือ ' + expDays + ' วัน)';
+          }
+          message('bloodMessage', successMsg, true);
+          await loadAllData();
+        } catch (err) {
+          message('bloodMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function resetBloodForm() {
+        var form = byId('bloodForm');
+        form.reset();
+        window.editingBloodUnitId = null;
+        byId('bloodSubmitBtnText').textContent = 'บันทึกรับเข้าคลัง';
+        setDefaultDates();
+      }
+
+      function editBloodUnit(donationId) {
+        var u = findBy(appData.inventory, 'DonationID', donationId);
+        if (!u) return;
+        showView('receiving');
+        var form = byId('bloodForm');
+        form.elements.donationId.value = u.DonationID;
+        form.elements.component.value = u.Component;
+        form.elements.volume.value = u.Volume;
+        form.elements.abo.value = u.ABO;
+        form.elements.rh.value = u.Rh;
+        form.elements.collectedAt.value = u.CollectedAt;
+        form.elements.expiresAt.value = u.ExpiresAt;
+        form.elements.source.value = u.Source || '';
+        form.elements.note.value = u.Note || '';
+        window.editingBloodUnitId = u.DonationID;
+        byId('bloodSubmitBtnText').textContent = 'อัปเดตข้อมูลถุงเลือด';
+      }
+
+      async function deleteBloodUnit(donationId) {
+        if (!confirm('คุณแน่ใจหรือไม่ที่จะลบถุงเลือดรหัส ' + donationId + ' ออกจากระบบ?')) return;
+        startLoading('กำลังลบข้อมูลถุงเลือด...');
+        try {
+          if (sbClient) {
+            const { error } = await sbClient.from('blood_inventory').delete().eq('donation_id', donationId);
+            if (error) throw error;
+            await writeAuditLog(currentUser.Username, 'ลบถุงเลือด', donationId);
+          }
+          await loadAllData();
+        } catch (err) {
+          alert('ลบไม่สำเร็จ: ' + err.message);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      async function cancelReservation(donationId) {
+        if (!confirm('คุณต้องการยกเลิกการจองถุงเลือด ' + donationId + ' และคืนสถานะพร้อมใช้หรือไม่?')) return;
+        startLoading('กำลังคืนสถานะถุงเลือด...');
+        try {
+          if (sbClient) {
+            const { error } = await sbClient.from('blood_inventory').update({ status: 'available', updated_at: new Date().toISOString() }).eq('donation_id', donationId);
+            if (error) throw error;
+            await writeAuditLog(currentUser.Username, 'ยกเลิกการจองเลือด', donationId);
+          }
+          await loadAllData();
+        } catch (err) {
+          alert('คืนสถานะไม่สำเร็จ: ' + err.message);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      async function releaseQuarantine() {
+        startLoading('กำลังปลดสถานะ Quarantine...');
+        try {
+          if (sbClient) {
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await sbClient
+              .from('blood_inventory')
+              .update({ status: 'available', updated_at: new Date().toISOString() })
+              .eq('status', 'quarantine')
+              .eq('markers', 'negative')
+              .gte('expires_at', today)
+              .select();
+
+            if (error) throw error;
+            const count = data ? data.length : 0;
+            await writeAuditLog(currentUser.Username, 'ปลด Quarantine', 'ปลดล็อก ' + count + ' unit');
+            message('bloodMessage', 'ปลดล็อกสถานะ Quarantine เรียบร้อย (' + count + ' ยูนิต)', true);
+          }
+          await loadAllData();
+        } catch (err) {
+          message('bloodMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      // 2. Patient & Request Submit (Nurse Reservation)
+      async function submitPatientRequest(e) {
+        e.preventDefault();
+        var form = byId('patientForm');
+        var hn = form.elements.hn.value.trim();
+        var name = form.elements.name.value.trim();
+        var age = form.elements.age.value.trim();
+        var ward = form.elements.ward.value.trim();
+        var bed = form.elements.bed.value.trim();
+        var priority = form.elements.priority.value;
+        var component = form.elements.component.value;
+        var units = parseFloat(form.elements.units.value) || 1;
+        var nurseName = form.elements.nurseName.value.trim();
+        var doctorName = form.elements.doctorName.value.trim();
+        var indication = form.elements.indication.value.trim();
+        var fileInput = form.elements.attachment;
+
+        if (!hn || !name) {
+          alert('กรุณาระบุ HN และชื่อผู้ป่วย');
+          return;
+        }
+
+        startLoading('กำลังบันทึกคำสั่งจองเลือดและลงทะเบียนผู้ป่วย...');
+        try {
+          let uploadInfo = null;
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            uploadInfo = await uploadToStorage(fileInput.files[0], 'patients');
+          }
+
+          if (sbClient) {
+            const patientData = {
+              hn: hn,
+              full_name: name,
+              age: age,
+              ward: ward,
+              bed: bed,
+              updated_at: new Date().toISOString()
+            };
+            if (uploadInfo) {
+              patientData.photo_url = uploadInfo.publicUrl;
+              patientData.photo_file_id = uploadInfo.fileId;
+              patientData.image_lh3_url = uploadInfo.publicUrl;
+            }
+
+            const { error: patErr } = await sbClient.from('patients').upsert(patientData);
+            if (patErr) throw patErr;
+
+            const requestId = 'REQ-' + formatDateCode(new Date());
+            const requestData = {
+              request_id: requestId,
+              hn: hn,
+              component: component,
+              units: units,
+              priority: priority,
+              indication: indication,
+              status: 'pending_grouping',
+              nurse_name: nurseName,
+              doctor_name: doctorName,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+
+            const { error: reqErr } = await sbClient.from('requests').insert(requestData);
+            if (reqErr) throw reqErr;
+
+            await writeAuditLog(currentUser.Username, 'จองเลือด', requestId + ' HN ' + hn + ' (' + component + ' ' + units + ' unit) โดย ' + nurseName);
+          }
+
+          resetPatientForm();
+          message('patientMessage', 'ส่งคำสั่งจองเลือดเรียบร้อยแล้ว ห้องปฏิบัติการได้รับคำขอแล้ว', true);
+          await loadAllData();
+        } catch (err) {
+          message('patientMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function resetPatientForm() {
+        byId('patientForm').reset();
+        byId('patientHistoryMsg').innerHTML = '';
+        if (currentUser && currentUser.Role === 'NURSE') {
+          byId('patientForm').elements.nurseName.value = currentUser.FullName;
+        }
+      }
+
+      function showPatientHistory(e) {
+        var hn = e.target.value.trim();
+        var msgBox = byId('patientHistoryMsg');
+        if (!hn) { msgBox.innerHTML = ''; return; }
+        
+        var p = findBy(appData.patients, 'HN', hn);
+        var hist = appData.crossmatches.filter(function (x) { return x.HN === hn && (x.DispenseStatus === 'dispensed' || x.DispenseStatus === 'ready'); });
+        
+        var html = '';
+        if (p && p.HistoricalABO) {
+          html += '<p class="text-xs font-bold text-crimson">🩸 ประวัติหมู่เลือดเดิมของผู้ป่วย: ' + esc(p.HistoricalABO) + ' ' + esc(p.HistoricalRh) + '</p>';
+        }
+        if (hist.length > 0) {
+          html += '<p class="text-xs font-bold text-amber-700 mt-1">🔄 มีประวัติได้รับ/จัดสรรเลือดแล้ว ' + hist.length + ' รายการ</p>';
+        }
+        
+        msgBox.innerHTML = html ? '<div class="rounded-xl bg-rose-50 p-3.5 border border-rose-100 mt-2 shadow-sm">' + html + '</div>' : '';
+      }
+
+      // 3. Grouping Submit
+      async function submitGrouping(e) {
+        e.preventDefault();
+        var form = byId('groupingForm');
+        var requestId = form.elements.requestId.value;
+        var antiA = form.elements.antiA.value;
+        var antiB = form.elements.antiB.value;
+        var antiAB = form.elements.antiAB.value;
+        var antiD = form.elements.antiD.value;
+        var cellA = form.elements.cellA.value;
+        var cellB = form.elements.cellB.value;
+        var cellO = form.elements.cellO.value;
+        var conclusionAbo = form.elements.conclusionAbo.value;
+        var rh = form.elements.rh.value;
+        var verifiedBy = form.elements.verifiedBy.value.trim();
+
+        if (!requestId || !conclusionAbo || !rh) {
+          alert('กรุณากรอกข้อมูลผลตรวจให้ครบถ้วน');
+          return;
+        }
+
+        var req = findBy(appData.requests, 'RequestID', requestId);
+        if (!req) return;
+        var patient = findBy(appData.patients, 'HN', req.HN);
+
+        if (patient && patient.HistoricalABO && (patient.HistoricalABO !== conclusionAbo || patient.HistoricalRh !== rh)) {
+          alert('🚨 Safety Lock: ประวัติกรุ๊ปเลือดเดิมของคนไข้คือ ' + patient.HistoricalABO + ' ' + patient.HistoricalRh + ' ไม่ตรงกับผลสรุปใหม่ ระบบไม่อนุญาตให้บันทึกเด็ดขาด');
+          return;
+        }
+
+        startLoading('กำลังบันทึกผลทางห้องปฏิบัติการ...');
+        try {
+          const cellTypeRecord = 'A:' + antiA + ', B:' + antiB + ', AB:' + antiAB + ', D:' + antiD;
+          const serumTypeRecord = 'A:' + cellA + ', B:' + cellB + ', O:' + cellO;
+
+          if (sbClient) {
+            const { error: reqErr } = await sbClient.from('requests').update({
+              status: 'ready_crossmatch',
+              cell_type: cellTypeRecord,
+              serum_type: serumTypeRecord,
+              patient_abo: conclusionAbo,
+              patient_rh: rh,
+              grouping_verified_by: verifiedBy,
+              grouping_verified_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }).eq('request_id', requestId);
+
+            if (reqErr) throw reqErr;
+
+            await sbClient.from('patients').update({
+              historical_abo: conclusionAbo,
+              historical_rh: rh,
+              updated_at: new Date().toISOString()
+            }).eq('hn', req.HN);
+
+            await writeAuditLog(currentUser.Username, 'บันทึกผลหมู่เลือด', requestId + ' สรุป: ' + conclusionAbo + ' ' + rh + ' โดย ' + verifiedBy);
+          }
+
+          message('groupingMessage', 'บันทึกผลตรวจหมู่เลือดและส่งต่อไปยังขั้นตอน Crossmatch เรียบร้อย', true);
+          await loadAllData();
+        } catch (err) {
+          message('groupingMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      // 4. Crossmatch Submit & A5 Tag Generation
+      async function submitCrossmatch(e) {
+        e.preventDefault();
+        var form = byId('crossmatchForm');
+        var requestId = form.elements.requestId.value;
+        var donationId = form.elements.donationId.value.trim().toUpperCase();
+        var unitAbo = form.elements.unitAbo.value;
+        var unitRh = form.elements.unitRh.value;
+        var unitComponent = form.elements.unitComponent.value;
+        var rt = form.elements.rt.value;
+        var inc37 = form.elements.inc37.value;
+        var iat = form.elements.iat.value;
+        var conclusion = form.elements.conclusion.value;
+        var tester = form.elements.tester.value.trim();
+        var checker = form.elements.checker.value.trim();
+
+        if (conclusion === 'Incompatible') {
+          alert('🚨 Safety Lock: ผลสรุปเป็น Incompatible ไม่สามารถอนุมัติจ่ายเลือดได้');
+          return;
+        }
+
+        var req = findBy(appData.requests, 'RequestID', requestId);
+        var unit = findBy(appData.inventory, 'DonationID', donationId);
+
+        if (!req || !unit) {
+          alert('ไม่พบข้อมูลคำขอหรือถุงเลือด');
+          return;
+        }
+
+        if (unitAbo !== unit.ABO || unitRh !== unit.Rh || unitComponent !== unit.Component) {
+          alert('🚨 Safety Lock: ข้อมูลถุงเลือดที่เลือกไม่ตรงกับข้อมูลจริงในระบบ');
+          return;
+        }
+
+        if (!isCompatible(req.PatientABO, req.PatientRh, unit.ABO, unit.Rh)) {
+          alert('🚨 Safety Lock: หมู่เลือดของคนไข้และถุงเลือดไม่ Compatible กันตามหลักวิชาการ');
+          return;
+        }
+
+        startLoading('กำลังอนุมัติผล Crossmatch และสร้างใบกำกับขนาด A5...');
+        try {
+          const crossmatchId = 'XM-' + formatDateCode(new Date());
+          const tagCode = req.HN + '|' + unit.DonationID;
+          const combinedVerifiedBy = tester + ' / ' + checker;
+
+          if (sbClient) {
+            const { error: xmErr } = await sbClient.from('crossmatches').insert({
+              crossmatch_id: crossmatchId,
+              request_id: requestId,
+              hn: req.HN,
+              donation_id: donationId,
+              major: rt,
+              minor: inc37,
+              auto_control: iat,
+              result: conclusion,
+              tag_code: tagCode,
+              verified_by: combinedVerifiedBy,
+              verified_at: new Date().toISOString(),
+              dispense_status: 'ready',
+              updated_at: new Date().toISOString()
+            });
+            if (xmErr) throw xmErr;
+
+            await sbClient.from('requests').update({ status: 'crossmatched', updated_at: new Date().toISOString() }).eq('request_id', requestId);
+            await sbClient.from('blood_inventory').update({ status: 'reserved', updated_at: new Date().toISOString() }).eq('donation_id', donationId);
+
+            await writeAuditLog(currentUser.Username, 'Approve Crossmatch', requestId + ' จับคู่ ' + donationId + ' Tag: ' + tagCode);
+          }
+
+          message('crossmatchMessage', 'อนุมัติ Crossmatch สำเร็จและสร้าง Tag คล้องถุงเลือดขนาด A5 เรียบร้อย', true);
+          await loadAllData();
+        } catch (err) {
+          message('crossmatchMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function updateCrossmatchSafety() {
+        var form = byId('crossmatchForm');
+        var conclusion = form.elements.conclusion.value;
+        var btn = byId('approveCrossmatch');
+        if (btn) {
+          btn.disabled = conclusion === 'Incompatible' || !form.elements.donationId.value;
+        }
+      }
+
+      // 5. Dispense Submit (3-Step Verification)
+      async function submitDispense(e) {
+        e.preventDefault();
+        var form = byId('dispenseForm');
+        var hn = form.elements.hn.value.trim();
+        var donationId = form.elements.donationId.value.trim().toUpperCase();
+        var tagCode = form.elements.tagCode.value.trim();
+        var receiver = form.elements.receiver.value.trim();
+        var dispenser = form.elements.dispenser.value.trim();
+
+        var match = appData.crossmatches.find(function (x) {
+          return x.HN === hn && x.DonationID === donationId && x.TagCode === tagCode && x.DispenseStatus === 'ready';
+        });
+
+        if (!match) {
+          alert('🚨 การตรวจสอบ 3 จุดไม่ตรงกัน! กรุณาตรวจสอบ HN, Donation ID และ QR Tag ให้ถูกต้อง');
+          return;
+        }
+
+        startLoading('กำลังประมวลผล 3-Step Verification และบันทึกจ่ายเลือด...');
+        try {
+          const dispensedAt = new Date().toISOString();
+          const coldDue = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+          const combinedReceiver = 'ผู้รับ: ' + receiver + ' / ผู้จ่าย: ' + dispenser;
+
+          if (sbClient) {
+            await sbClient.from('crossmatches').update({
+              dispense_status: 'dispensed',
+              receiver: combinedReceiver,
+              dispensed_at: dispensedAt,
+              cold_chain_due_at: coldDue,
+              updated_at: new Date().toISOString()
+            }).eq('crossmatch_id', match.CrossmatchID);
+
+            await sbClient.from('blood_inventory').update({ status: 'dispensed', updated_at: new Date().toISOString() }).eq('donation_id', donationId);
+            await sbClient.from('requests').update({ status: 'dispensed', updated_at: new Date().toISOString() }).eq('request_id', match.RequestID);
+
+            await writeAuditLog(currentUser.Username, 'จ่ายเลือด', donationId + ' ให้ HN ' + hn + ' (' + combinedReceiver + ')');
+          }
+
+          form.reset();
+          message('dispenseMessage', '✅ ยืนยัน 3 จุดสำเร็จ: จ่ายเลือดเรียบร้อย (เริ่มนับเวลา Cold Chain 30 นาที)', true);
+          await loadAllData();
+        } catch (err) {
+          message('dispenseMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      // 6. Upload Standalone File
+      async function submitUpload(e) {
+        e.preventDefault();
+        var form = byId('uploadForm');
+        var ownerType = form.elements.ownerType.value;
+        var ownerId = form.elements.ownerId.value.trim() || 'GENERAL';
+        var fileInput = form.elements.attachment;
+
+        if (!fileInput.files || !fileInput.files[0]) {
+          alert('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
+          return;
+        }
+
+        startLoading('กำลังบีบอัดและอัปโหลดไฟล์ไปยัง Supabase Storage...');
+        try {
+          const file = fileInput.files[0];
+          const uploadInfo = await uploadToStorage(file, 'general_attachments');
+
+          if (!uploadInfo) throw new Error('อัปโหลดไฟล์ไปยัง Storage ไม่สำเร็จ');
+
+          if (sbClient) {
+            const attachId = 'ATT-' + Date.now();
+            await sbClient.from('attachments').insert({
+              attachment_id: attachId,
+              owner_type: ownerType,
+              owner_id: ownerId,
+              file_name: file.name,
+              mime_type: uploadInfo.mimeType,
+              file_id: uploadInfo.fileId,
+              drive_url: uploadInfo.publicUrl,
+              lh3_url: uploadInfo.publicUrl,
+              uploaded_at: new Date().toISOString()
+            });
+
+            await writeAuditLog(currentUser.Username, 'อัปโหลดเอกสาร', uploadInfo.fileName + ' (' + ownerType + ':' + ownerId + ')');
+          }
+
+          form.reset();
+          message('uploadMessage', 'อัปโหลดเอกสารสำเร็จเรียบร้อย', true);
+          renderUploadResult({ publicUrl: uploadInfo.publicUrl, fileName: uploadInfo.fileName });
+        } catch (err) {
+          message('uploadMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function renderUploadResult(info) {
+        var box = byId('uploadResult');
+        if (!info || !info.publicUrl) { box.innerHTML = ''; return; }
+        box.innerHTML = '<div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 shadow-sm">' +
+          '<p class="font-bold text-crimson text-xs">ไฟล์ถูกบันทึกใน Storage เรียบร้อย</p>' +
+          '<a class="text-xs break-all text-rose-700 hover:underline mt-1 block font-medium" href="' + esc(info.publicUrl) + '" target="_blank">📄 เปิดดูเอกสาร: ' + esc(info.fileName) + '</a>' +
+          '<img class="mt-2 max-h-40 rounded-xl border border-slate-200 shadow-sm" src="' + esc(info.publicUrl) + '" onerror="handleImageError(this)">' +
+          '</div>';
+      }
+
+      // 7. User Submit
+      async function submitUser(e) {
+        e.preventDefault();
+        var form = byId('userForm');
+        var username = form.elements.username.value.trim().toLowerCase();
+        var password = form.elements.password.value.trim();
+        var fullName = form.elements.fullName.value.trim();
+        var role = form.elements.role.value;
+        var active = form.elements.active.value;
+
+        if (!username || !password || !fullName) {
+          alert('กรุณากรอกข้อมูลผู้ใช้ให้ครบถ้วน');
+          return;
+        }
+
+        startLoading('กำลังบันทึกข้อมูลผู้ใช้งาน...');
+        try {
+          if (sbClient) {
+            const { error } = await sbClient.from('users').upsert({
+              username: username,
+              password: password,
+              full_name: fullName,
+              role: role,
+              active: active,
+              updated_at: new Date().toISOString()
+            });
+
+            if (error) throw error;
+            await writeAuditLog(currentUser.Username, 'ปรับปรุงผู้ใช้', username + ' (' + role + ')');
+          }
+
+          form.reset();
+          message('userMessage', 'บันทึกข้อมูลเจ้าหน้าที่เรียบร้อยแล้ว', true);
+          await loadAllData();
+        } catch (err) {
+          message('userMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
+        } finally {
+          stopLoading();
+        }
+      }
+
+      function fillUserForm(username) {
+        var u = findBy(appData.users, 'Username', username);
+        if (!u) return;
+        var f = byId('userForm');
+        f.username.value = u.Username;
+        f.password.value = '';
+        f.fullName.value = u.FullName;
+        f.role.value = u.Role;
+        f.active.value = u.Active;
+      }
+
+      function renderAll() {
+        renderDashboard();
+        renderCharts();
+        renderSelectors();
+        renderTag();
+        renderAudit();
+        renderUsers();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function renderDashboard() {
+        var selectedMonth = byId('statsMonthPicker').value || (new Date().toISOString().slice(0, 7));
+
+        // Monthly calculations
+        var monthlyReceived = appData.inventory.filter(function (u) {
+          var rDate = u.ReceivedAt || u.CollectedAt || '';
+          return rDate.startsWith(selectedMonth);
+        }).length;
+
+        var monthlyDispensed = appData.crossmatches.filter(function (x) {
+          var dDate = x.DispensedAt || '';
+          return x.DispenseStatus === 'dispensed' && dDate.startsWith(selectedMonth);
+        }).length;
+
+        var available = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0; }).length;
+        var expiring = appData.inventory.filter(function (u) { var d = daysUntil(u.ExpiresAt); return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && d >= 0 && d <= 10; }).length;
+        var expired = appData.inventory.filter(function (u) { return u.Status === 'discard' || daysUntil(u.ExpiresAt) < 0; }).length;
+        var pending = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).length;
+        
+        byId('statMonthlyReceived').textContent = monthlyReceived;
+        byId('statMonthlyDispensed').textContent = monthlyDispensed;
+        byId('kpiAvailable').textContent = available;
+        byId('kpiExpiring').textContent = expiring;
+        byId('kpiExpired').textContent = expired;
+        byId('pendingCount').textContent = pending + ' รายการ';
+
+        byId('pendingRequests').innerHTML = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
+          var p = findBy(appData.patients, 'HN', r.HN) || {};
+          var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
+          return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
+            '<span class="' + color + ' rounded-full"></span>' +
+            '<div>' +
+              '<p class="font-bold text-slate-900 text-xs">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + '</p>' +
+              '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
+              '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
+            '</div>' +
+            '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all">' +
+              esc(r.Priority) +
+            '</button>' +
+          '</article>';
+        }).join('') || '<p class="font-medium text-slate-400 text-center py-6 text-xs">ไม่มีรายการคำขอค้างดำเนินการ</p>';
+
+        byId('bloodSummary').innerHTML = ['O', 'A', 'B', 'AB'].map(function (g) {
+          var c = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
+          return '<div class="rounded-xl border border-rose-100 bg-rose-50/60 p-2.5 text-center">' +
+            '<p class="text-[0.7rem] font-bold text-crimson">หมู่ ' + g + '</p>' +
+            '<p class="text-xl sm:text-2xl font-bold text-rose-900">' + c + '</p>' +
+            '</div>';
+        }).join('');
+
+        var isAllowedManage = currentUser && ['ADMIN', 'MT'].indexOf(currentUser.Role) >= 0;
+        if (isAllowedManage) {
+          byId('manageHeader').classList.remove('hidden');
+        } else {
+          byId('manageHeader').classList.add('hidden');
+        }
+
+        byId('inventoryTable').innerHTML = appData.inventory.slice().sort(function (a, b) { return new Date(a.ExpiresAt) - new Date(b.ExpiresAt); }).map(function (u) {
+          var daysLeft = daysUntil(u.ExpiresAt);
+          var rowColorClass = '';
+          var expiryBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+          
+          if (daysLeft < 0) {
+            // Expired: Red Alert
+            rowColorClass = 'bg-red-50/80 text-red-950 font-medium';
+            expiryBadgeClass = 'bg-red-100 text-red-800 border-red-300 font-bold';
+          } else if (daysLeft >= 0 && daysLeft <= 10) {
+            // Expiring in <= 10 days: Yellow / Amber Alert
+            rowColorClass = 'bg-amber-50/80 text-amber-950 font-medium';
+            expiryBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+          }
+
+          var actionCell = '';
+          if (isAllowedManage) {
+            var returnBtn = '';
+            if (u.Status === 'reserved') {
+              returnBtn = '<button class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[0.7rem] font-bold text-amber-700 hover:bg-amber-100 shadow-sm" onclick="cancelReservation(this.dataset.id)" data-id="' + esc(u.DonationID) + '">คืนคลัง</button>';
+            }
+            actionCell = '<td class="p-3">' +
+              '<div class="flex items-center gap-1.5">' +
+              returnBtn +
+              '<button class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[0.7rem] font-bold text-slate-600 hover:bg-slate-100 shadow-sm" onclick="editBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">แก้ไข</button>' +
+              '<button class="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[0.7rem] font-bold text-red-600 hover:bg-red-100 shadow-sm" onclick="deleteBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">ลบ</button>' +
+              '</div>' +
+              '</td>';
+          }
+          return '<tr data-search="' + esc([u.DonationID, u.Component, u.ABO, u.Rh, u.Source].join(' ')) + '" class="border-b border-slate-100 ' + rowColorClass + ' hover:bg-slate-50 transition-colors">' +
+            '<td class="p-3 font-bold text-slate-900">' + esc(u.DonationID) + renderAttachmentPreview(u) + '</td>' +
+            '<td class="p-3"><span class="font-semibold">' + esc(u.Component) + '</span><br><span class="text-[0.7rem] text-slate-500">' + esc(u.Volume) + ' ml</span></td>' +
+            '<td class="p-3 font-bold text-crimson">' + esc(u.ABO) + ' ' + esc(u.Rh) + '</td>' +
+            '<td class="p-3">' + esc(u.ExpiresAt) + '<br><span class="inline-block px-1.5 py-0.5 rounded text-[0.65rem] border ' + expiryBadgeClass + '">' + expiryLabel(u.ExpiresAt) + '</span></td>' +
+            '<td class="p-3">' + badge(u.Status, u.DonationID) + '</td>' +
+            actionCell +
+            '</tr>';
+        }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
+      }
+
+      function renderCharts() {
+        const bloodCtx = document.getElementById('bloodGroupChart');
+        const compCtx = document.getElementById('componentChart');
+        if (!bloodCtx || !compCtx) return;
+
+        const aboCounts = ['O', 'A', 'B', 'AB'].map(function (g) {
+          return appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
+        });
+
+        const compTypes = ['PRC', 'LPRC', 'FFP', 'Platelet', 'Cryoprecipitate', 'WB'];
+        const compCounts = compTypes.map(function (c) {
+          return appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.Component === c; }).length;
+        });
+
+        if (bloodGroupChartInstance) bloodGroupChartInstance.destroy();
+        bloodGroupChartInstance = new Chart(bloodCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['หมู่ O', 'หมู่ A', 'หมู่ B', 'หมู่ AB'],
+            datasets: [{
+              data: aboCounts,
+              backgroundColor: ['#e11d48', '#f59e0b', '#3b82f6', '#8b5cf6'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { family: 'Kanit', size: 11 } } }
+            }
+          }
+        });
+
+        if (componentChartInstance) componentChartInstance.destroy();
+        componentChartInstance = new Chart(compCtx, {
+          type: 'bar',
+          data: {
+            labels: compTypes,
+            datasets: [{
+              label: 'จำนวนยูนิต',
+              data: compCounts,
+              backgroundColor: '#be123c',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Kanit', size: 10 } } },
+              x: { ticks: { font: { family: 'Kanit', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      function renderSelectors() {
+        byId('groupingRequest').innerHTML = appData.requests.filter(function (r) { return r.Status === 'pending_grouping' || r.Status === 'investigate'; }).map(function (r) {
+          return '<option value="' + esc(r.RequestID) + '">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + ' | ' + esc(r.Component) + '</option>';
+        }).join('') || '<option value="">ไม่มีรายการคำขอที่รอผล</option>';
+
+        byId('crossmatchRequest').innerHTML = appData.requests.filter(function (r) { return r.Status === 'ready_crossmatch'; }).map(function (r) {
+          return '<option value="' + esc(r.RequestID) + '">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + ' | ' + esc(r.PatientABO) + ' ' + esc(r.PatientRh) + ' | ' + esc(r.Component) + '</option>';
+        }).join('') || '<option value="">ไม่มีรายการที่รอเทียบความเข้ากันได้</option>';
+
+        renderCompatibleUnits();
+      }
+
+      function renderCompatibleUnits() {
+        var req = findBy(appData.requests, 'RequestID', byId('crossmatchRequest').value);
+        var units = req ? appData.inventory.filter(function (u) {
+          return u.Status === 'available' && u.Component === req.Component && daysUntil(u.ExpiresAt) >= 0 && isCompatible(req.PatientABO, req.PatientRh, u.ABO, u.Rh);
+        }).sort(function (a, b) { return new Date(a.ExpiresAt) - new Date(b.ExpiresAt); }) : [];
+
+        byId('compatibleUnits').innerHTML = units.map(function (u) {
+          return '<option value="' + esc(u.DonationID) + '">' + esc(u.DonationID) + ' | ' + esc(u.Component) + ' | ' + esc(u.ABO) + ' ' + esc(u.Rh) + ' | ⏳ หมดอายุ ' + esc(u.ExpiresAt) + '</option>';
+        }).join('') || '<option value="">ไม่มีถุงเลือดในคลังที่รองรับได้</option>';
+
+        updateCrossmatchSafety();
+      }
+
+      // Render Professional A5 Blood Tag & Transfusion Sheet
+      function renderTag() {
+        var x = appData.crossmatches.slice().find(function (r) { return r.DispenseStatus === 'ready'; });
+        var box = byId('tagPreview');
+        if (!x) { box.innerHTML = ''; return; }
+        var p = findBy(appData.patients, 'HN', x.HN) || {}, u = findBy(appData.inventory, 'DonationID', x.DonationID) || {}, r = findBy(appData.requests, 'RequestID', x.RequestID) || {};
+        
+        box.innerHTML = '<div class="a5-container max-w-4xl rounded-2xl border-2 border-slate-900 bg-white p-6 shadow-xl">' +
+          '<!-- A5 Header -->' +
+          '<div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-4">' +
+            '<div class="flex items-center gap-3">' +
+              '<div class="h-10 w-10 bg-crimson text-white rounded-xl flex items-center justify-center font-bold text-lg"><i data-lucide="droplet" class="w-6 h-6 fill-current"></i></div>' +
+              '<div>' +
+                '<h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">โรงพยาบาลเขาฉกรรจ์ — ธนาคารเลือด (Blood Bank)</h2>' +
+                '<p class="text-xs text-slate-600 font-semibold">ใบกำกับถุงเลือดและบันทึกการให้เลือด (Blood Tag & Transfusion Record) — ขนาด A5</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="text-right">' +
+              '<p class="text-xs font-bold text-slate-900">Tag Code: ' + esc(x.TagCode) + '</p>' +
+              '<p class="text-[0.7rem] text-slate-500">Crossmatch ID: ' + esc(x.CrossmatchID) + '</p>' +
+            '</div>' +
+          '</div>' +
+
+          '<!-- A5 Main Content (3 Columns) -->' +
+          '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-4">' +
+            '<!-- Patient Box -->' +
+            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i> ข้อมูลผู้ป่วย</p>' +
+              '<p><strong>HN:</strong> <span class="text-sm font-bold text-slate-900">' + esc(x.HN) + '</span></p>' +
+              '<p><strong>ชื่อ-สกุล:</strong> ' + esc(p.FullName || '-') + '</p>' +
+              '<p><strong>Ward / Bed:</strong> ' + esc(p.Ward || '-') + ' / ' + esc(p.Bed || '-') + '</p>' +
+              '<p><strong>หมู่เลือดผู้ป่วย:</strong> <span class="font-bold text-crimson text-sm">' + esc(r.PatientABO || '-') + ' ' + esc(r.PatientRh || '-') + '</span></p>' +
+            '</div>' +
+
+            '<!-- Donor Unit Box -->' +
+            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="barcode" class="w-3.5 h-3.5"></i> ข้อมูลถุงเลือด</p>' +
+              '<p><strong>Donation ID:</strong> <span class="font-bold text-slate-900">' + esc(x.DonationID) + '</span></p>' +
+              '<p><strong>ชนิดเลือด:</strong> ' + esc(u.Component || '-') + ' (' + esc(u.Volume || '-') + ' ml)</p>' +
+              '<p><strong>หมู่เลือดถุง:</strong> <span class="font-bold text-crimson text-sm">' + esc(u.ABO || '-') + ' ' + esc(u.Rh || '-') + '</span></p>' +
+              '<p><strong>วันหมดอายุ:</strong> <span class="font-bold text-slate-900">' + esc(u.ExpiresAt || '-') + '</span></p>' +
+            '</div>' +
+
+            '<!-- Lab Test Result Box -->' +
+            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> ผลตรวจความเข้ากันได้</p>' +
+              '<p><strong>ผล Crossmatch:</strong> <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">' + esc(x.Result) + '</span></p>' +
+              '<p><strong>RT / 37°C / IAT:</strong> ' + esc(x.Major || '-') + ' / ' + esc(x.Minor || '-') + ' / ' + esc(x.AutoControl || '-') + '</p>' +
+              '<p><strong>ผู้ตรวจ/ทาน:</strong> ' + esc(x.VerifiedBy || '-') + '</p>' +
+              '<p class="text-[0.65rem] text-slate-500">วันที่ตรวจ: ' + (x.VerifiedAt ? new Date(x.VerifiedAt).toLocaleString('th-TH') : '-') + '</p>' +
+            '</div>' +
+          '</div>' +
+
+          '<!-- Transfusion V/S Record Section (Hospital Form) -->' +
+          '<div class="rounded-xl border border-slate-300 p-3 mb-4 text-[0.7rem] bg-white">' +
+            '<p class="font-bold text-slate-800 mb-1.5">📋 บันทึกการให้เลือดและสัญญาณชีพ (สำหรับพยาบาลประจำตึก):</p>' +
+            '<div class="grid grid-cols-5 gap-1 text-center font-bold bg-slate-100 p-1 rounded">' +
+              '<span>เวลา</span><span>T (°C)</span><span>PR (/min)</span><span>BP (mmHg)</span><span>RR (/min)</span>' +
+            '</div>' +
+            '<div class="grid grid-cols-5 gap-1 text-center p-1 border-b border-slate-100"><span>ก่อนให้ (Pre)</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
+            '<div class="grid grid-cols-5 gap-1 text-center p-1 border-b border-slate-100"><span>15 นาทีแรก</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
+            '<div class="grid grid-cols-5 gap-1 text-center p-1"><span>หลังให้เสร็จ</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
+          '</div>' +
+
+          '<!-- Signatures & Print Action -->' +
+          '<div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200 text-xs">' +
+            '<div class="flex items-center gap-4">' +
+              '<p>ลงชื่อพยาบาลผู้รับเลือด: .......................................</p>' +
+              '<p>ลงชื่อพยาบาลผู้ให้เลือด: .......................................</p>' +
+            '</div>' +
+            '<button onclick="window.print()" class="no-print rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 font-bold text-white transition-all shadow-md flex items-center gap-2 text-xs">' +
+              '<i data-lucide="printer" class="w-4 h-4"></i> สั่งพิมพ์ขนาด A5 (Print A5 Tag)' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      function renderAudit() {
+        byId('auditTable').innerHTML = appData.audit.map(function (a) {
+          return '<tr class="hover:bg-rose-50/50 transition-colors">' +
+            '<td class="p-3 text-slate-500">' + esc(a.At) + '</td>' +
+            '<td class="p-3 font-semibold text-slate-800">' + esc(a.User) + '</td>' +
+            '<td class="p-3 font-bold text-crimson">' + esc(a.Action) + '</td>' +
+            '<td class="p-3 text-slate-600">' + esc(a.Detail) + '</td>' +
+            '</tr>';
+        }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="4">ยังไม่มีประวัติการใช้งานในระบบ</td></tr>';
+      }
+
+      function renderUsers() {
+        byId('usersTable').innerHTML = appData.users.map(function (u) {
+          return '<tr class="hover:bg-rose-50/50 transition-colors">' +
+            '<td class="p-3 font-bold text-slate-800">' + esc(u.Username) + '</td>' +
+            '<td class="p-3">' + esc(u.FullName) + '</td>' +
+            '<td class="p-3"><span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[0.65rem] font-bold">' + esc(u.Role) + '</span></td>' +
+            '<td class="p-3">' + (u.Active === 'TRUE' ? '<span class="text-emerald-600 font-bold">ปกติ</span>' : '<span class="text-red-500 font-bold">ระงับ</span>') + '</td>' +
+            '<td class="p-3 text-slate-400">' + esc(u.LastLoginAt || '-') + '</td>' +
+            '<td class="p-3"><button class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 shadow-sm" onclick="fillUserForm(this.dataset.id)" data-id="' + esc(u.Username) + '">แก้ไข</button></td>' +
+            '</tr>';
+        }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลบุคลากรในระบบ</td></tr>';
+      }
+
+      function renderMenus() {
+        var role = currentUser ? currentUser.Role : 'GUEST';
+        var allowed = menus.filter(function (m) { return m.roles.indexOf(role) >= 0; });
+        
+        // 1. Desktop Menu (Compact)
+        byId('desktopMenu').innerHTML = allowed.map(function (m) {
+          return '<button class="nav flex items-center gap-2 rounded-lg px-2.5 py-2 text-left font-semibold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.8rem] truncate" data-view="' + m.id + '">' +
+            '<i data-lucide="' + m.icon + '" class="w-4 h-4 shrink-0"></i> <span>' + m.label + '</span>' +
+            '</button>';
+        }).join('') + (currentUser ? '<button class="mt-auto mb-1 flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-2.5 py-2 text-left font-bold text-red-600 hover:bg-red-100 transition-colors text-[0.8rem]" onclick="openLogoutModal()"><i data-lucide="log-out" class="w-4 h-4 shrink-0"></i> ออกจากระบบ</button>' : '');
+
+        // 2. Slide Drawer Menu
+        byId('drawerMenu').innerHTML = allowed.map(function (m) {
+          return '<button class="drawer-nav flex items-center gap-3 rounded-xl px-4 py-3 text-left font-bold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-xs" data-view="' + m.id + '">' +
+            '<i data-lucide="' + m.icon + '" class="w-5 h-5 text-crimson"></i> ' + m.label +
+            '</button>';
+        }).join('');
+
+        // 3. Bottom Mobile Menu
+        var mobileMain = allowed.filter(function (m) { return m.mobile; }).slice(0, 5);
+        byId('bottomNav').innerHTML = mobileMain.map(function (m) {
+          return '<button class="bottom-nav flex flex-col items-center justify-center rounded-xl px-1 py-2 text-[0.7rem] font-bold text-slate-500 hover:text-crimson transition-colors" data-view="' + m.id + '">' +
+            '<i data-lucide="' + m.icon + '" class="w-4 h-4 mb-0.5"></i>' + m.label +
+            '</button>';
+        }).join('');
+
+        // Bind view switcher
+        document.querySelectorAll('[data-view]').forEach(function (button) {
+          button.onclick = function () {
+            showView(button.dataset.view);
+            closeDrawer();
+          };
+        });
+      }
+
+      function showView(id) {
+        document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.id === id); });
+        document.querySelectorAll('.nav, .bottom-nav, .drawer-nav').forEach(function (n) { n.classList.toggle('active', n.dataset.view === id); });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function handleRequestClick(requestId) {
+        var r = findBy(appData.requests, 'RequestID', requestId);
+        if (!r) return;
+        
+        if (r.Status === 'pending_grouping' || r.Status === 'investigate') {
+          showView('grouping');
+          var select = byId('groupingRequest');
+          if (select) select.value = r.RequestID;
+        } else if (r.Status === 'ready_crossmatch') {
+          showView('crossmatch');
+          var select = byId('crossmatchRequest');
+          if (select) {
+            select.value = r.RequestID;
+            renderCompatibleUnits();
+          }
+        } else if (r.Status === 'crossmatched' || r.Status === 'ready') {
+          showView('dispense');
+          var form = byId('dispenseForm');
+          if (form) {
+            form.elements.hn.value = r.HN;
+            var xm = appData.crossmatches.slice().find(function (x) {
+              return x.RequestID === r.RequestID && x.DispenseStatus === 'ready';
+            });
+            if (xm) {
+              form.elements.donationId.value = xm.DonationID;
+              form.elements.tagCode.value = xm.TagCode;
+            }
+          }
+        }
+      }
+
+      function globalSearch() {
+        var term = byId('globalSearch').value.trim().toLowerCase();
+        document.querySelectorAll('.search-highlight, .ring-2.ring-rose-300').forEach(function (n) {
+          n.classList.remove('search-highlight', 'bg-rose-200', 'text-rose-950', 'ring-2', 'ring-rose-300');
+        });
+        if (!term) return;
+        var target = Array.prototype.slice.call(document.querySelectorAll('[data-search]')).find(function (n) {
+          return (n.dataset.search || '').toLowerCase().indexOf(term) >= 0;
+        });
+        if (target) {
+          showView(target.closest('.view').id);
+          if (target.tagName === 'TR') {
+            target.classList.add('search-highlight', 'bg-rose-200', 'text-rose-950');
+          } else {
+            target.classList.add('search-highlight', 'ring-2', 'ring-rose-300');
+          }
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      function handleImageError(img) {
+        if (!img) return;
+        const parent = img.parentElement;
+        const fallback = document.createElement('span');
+        fallback.className = 'img-fallback-box';
+        fallback.innerHTML = '<span>⚠️ รูปภาพไม่พร้อมใช้งาน</span>';
+        img.style.display = 'none';
+        if (parent) parent.appendChild(fallback);
+      }
+
+      function renderAttachmentPreview(u) {
+        var url = u.ImageLh3Url || u.AttachmentUrl || '';
+        if (!url) return '';
+        return '<br><a class="text-[0.7rem] font-semibold text-crimson hover:underline inline-flex items-center gap-1 mt-0.5" href="' + esc(url) + '" target="_blank">' +
+          '<i data-lucide="image" class="w-3 h-3"></i> ดูไฟล์แนบ' +
+          '</a>';
+      }
+
+      function startLoading(text) {
+        byId('loaderText').textContent = text || 'กรุณารอสักครู่...';
+        document.body.classList.add('loading');
+      }
+      function stopLoading() {
+        document.body.classList.remove('loading');
+      }
+      function setDefaultDates() {
+        var n = new Date(), e = new Date();
+        e.setDate(e.getDate() + 35);
+        var c = document.querySelector('[name="collectedAt"]'), x = document.querySelector('[name="expiresAt"]');
+        if (c) c.value = formatDate(n);
+        if (x) x.value = formatDate(e);
+      }
+      function badge(s, id) {
+        var cls = s === 'available' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : s === 'discard' || s === 'dispensed' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200';
+        var clickAttr = id ? ' onclick="editBloodUnit(this.dataset.id)" data-id="' + esc(id) + '"' : '';
+        var cursorCls = id ? ' cursor-pointer hover:opacity-80 transition-all' : '';
+        return '<span' + clickAttr + ' class="rounded-md px-2 py-0.5 text-[0.65rem] font-bold border shadow-sm ' + cls + cursorCls + '">' + statusText(s) + '</span>';
+      }
+      function statusText(s) {
+        return {
+          available: 'พร้อมใช้งาน',
+          quarantine: 'กักกันรอผล',
+          discard: 'ทำลาย/หมดอายุ',
+          reserved: 'ถูกจอง',
+          dispensed: 'จ่ายแล้ว',
+          pending_grouping: 'รอผลหมู่เลือด',
+          ready_crossmatch: 'รอ Crossmatch',
+          crossmatched: 'เข้ากันได้',
+          investigate: 'Investigate',
+          ready: 'พร้อมจ่าย'
+        }[s] || s || '-';
+      }
+      function expiryLabel(d) {
+        var n = daysUntil(d);
+        if (n < 0) return '🚨 หมดอายุแล้ว';
+        if (n === 0) return '⚠️ หมดอายุวันนี้';
+        if (n <= 10) return '⚠️ อีก ' + n + ' วัน (ใกล้หมดอายุ)';
+        return 'อีก ' + n + ' วัน';
+      }
+      function daysUntil(t) {
+        if (!t) return 9999;
+        var p = String(t).split('-').map(Number);
+        var target = new Date(p[0], p[1] - 1, p[2]);
+        var n = new Date();
+        var today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+        return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+      }
+      function isCompatible(pa, pr, ua, ur) {
+        var red = { O: ['O'], A: ['A', 'O'], B: ['B', 'O'], AB: ['AB', 'A', 'B', 'O'] };
+        return red[pa] && red[pa].indexOf(ua) >= 0 && (pr === 'Positive' || ur === 'Negative');
+      }
+      function formatDate(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+      function formatDateCode(d) {
+        return String(d.getFullYear()).slice(-2) +
+          String(d.getMonth() + 1).padStart(2, '0') +
+          String(d.getDate()).padStart(2, '0') +
+          String(d.getHours()).padStart(2, '0') +
+          String(d.getMinutes()).padStart(2, '0') +
+          String(d.getSeconds()).padStart(2, '0');
+      }
+      function findBy(list, key, value) {
+        return (Array.isArray(list) ? list : []).find(function (i) { return i && i[key] === value; });
+      }
+      function message(id, text, ok) {
+        var n = byId(id);
+        if (!n) return;
+        n.textContent = text || '';
+        n.className = (ok ? 'text-emerald-700' : 'text-amber-700') + ' font-bold mt-2 block text-xs';
+      }
+      function esc(v) {
+        return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function jsAttr(v) {
+        return esc(String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\'"));
+      }
+      function byId(id) {
+        return document.getElementById(id);
+      }
+    </script>
+  </body>
+</html>
