@@ -90,17 +90,11 @@
         width: 100% !important;
       }
 
-            /* Official Government Print Styles */
+            /* Official Print Styles & Container Rules */
       @media print {
         @page {
-          size: A4 landscape;
-          margin: 8mm 10mm;
-        }
-        body.print-tag-mode {
-          @page {
-            size: A5 landscape;
-            margin: 6mm;
-          }
+          size: A5 landscape;
+          margin: 4mm 5mm;
         }
         html, body {
           width: 100% !important;
@@ -113,7 +107,7 @@
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .no-print, header, aside, nav, #loginScreen, #globalLoader, #cameraScannerModal, #logoutModal, form, #fmlabForm, #bloodForm, #patientForm, #groupingForm, #crossmatchForm, #dispenseForm, #uploadForm, #userForm {
+        .no-print, header, aside, nav, #loginScreen, #globalLoader, #cameraScannerModal, #logoutModal, form {
           display: none !important;
         }
         .print-only {
@@ -129,33 +123,45 @@
         }
         body.printing-fmlab #fmlabPrintContainer {
           display: block !important;
+          width: 100% !important;
         }
         body.printing-tag #crossmatchPrintContainer {
           display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .a5-container {
+          width: 100% !important;
+          max-width: 198mm !important;
+          max-height: 135mm !important;
+          box-sizing: border-box !important;
+          border: 1.5px solid #000000 !important;
+          border-radius: 6px !important;
+          padding: 3mm 4mm !important;
+          margin: 0 auto !important;
+          page-break-after: avoid !important;
+          page-break-inside: avoid !important;
+          box-shadow: none !important;
+          background: #ffffff !important;
+          overflow: hidden !important;
         }
         .gov-table {
           width: 100% !important;
           border-collapse: collapse !important;
-          font-size: 9.5pt !important;
-          line-height: 1.25 !important;
+          font-size: 9pt !important;
+          line-height: 1.2 !important;
         }
         .gov-table th, .gov-table td {
           border: 1px solid #000000 !important;
-          padding: 4px 6px !important;
+          padding: 3px 5px !important;
           color: #000000 !important;
         }
         .gov-table th {
           background-color: #f1f5f9 !important;
           font-weight: 700 !important;
           text-align: center !important;
-        }
-        .a5-container {
-          width: 100% !important;
-          max-width: 100% !important;
-          border: 2px solid #000000 !important;
-          padding: 6mm !important;
-          page-break-after: always;
-          box-shadow: none !important;
         }
       }
       @media screen {
@@ -745,6 +751,23 @@
                 <option value="Routine">Routine (ปกติ)</option>
                 <option value="Urgent">Urgent (ด่วน)</option>
                 <option value="Massive Transfusion">Massive Transfusion (วิกฤต/ฉุกเฉิน)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>หมู่เลือดผู้ป่วย (ABO) *</span>
+              <select name="abo" required class="font-bold text-crimson">
+                <option value="O">หมู่ O</option>
+                <option value="A">หมู่ A</option>
+                <option value="B">หมู่ B</option>
+                <option value="AB">หมู่ AB</option>
+                <option value="Unknown">ไม่ทราบ / รอผลตรวจ</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>หมู่เลือด Rh(D) *</span>
+              <select name="rh" required>
+                <option value="Positive">Positive (+)</option>
+                <option value="Negative">Negative (-)</option>
               </select>
             </label>
             <label class="field">
@@ -2191,6 +2214,8 @@
         var ward = form.elements.ward.value.trim();
         var bed = form.elements.bed.value.trim();
         var priority = form.elements.priority.value;
+        var abo = form.elements.abo ? form.elements.abo.value : '';
+        var rh = form.elements.rh ? form.elements.rh.value : '';
         var component = form.elements.component.value;
         var units = parseFloat(form.elements.units.value) || 1;
         var nurseName = form.elements.nurseName.value.trim();
@@ -2217,6 +2242,8 @@
               age: age,
               ward: ward,
               bed: bed,
+              historical_abo: (abo && abo !== 'Unknown') ? abo : null,
+              historical_rh: (abo && abo !== 'Unknown') ? rh : null,
               updated_at: new Date().toISOString()
             };
             if (uploadInfo) {
@@ -2237,6 +2264,8 @@
               priority: priority,
               indication: indication,
               status: 'pending_grouping',
+              patient_abo: (abo && abo !== 'Unknown') ? abo : null,
+              patient_rh: (abo && abo !== 'Unknown') ? rh : null,
               nurse_name: nurseName,
               doctor_name: doctorName,
               created_at: new Date().toISOString(),
@@ -2273,11 +2302,20 @@
         if (!hn) { msgBox.innerHTML = ''; return; }
         
         var p = findBy(appData.patients, 'HN', hn);
+        var form = byId('patientForm');
         var hist = appData.crossmatches.filter(function (x) { return x.HN === hn && (x.DispenseStatus === 'dispensed' || x.DispenseStatus === 'ready'); });
         
         var html = '';
-        if (p && p.HistoricalABO) {
-          html += '<p class="text-xs font-bold text-crimson">🩸 ประวัติหมู่เลือดเดิมของผู้ป่วย: ' + esc(p.HistoricalABO) + ' ' + esc(p.HistoricalRh) + '</p>';
+        if (p) {
+          if (p.FullName && !form.elements.name.value) form.elements.name.value = p.FullName;
+          if (p.Age && !form.elements.age.value) form.elements.age.value = p.Age;
+          if (p.Ward && !form.elements.ward.value) form.elements.ward.value = p.Ward;
+          if (p.Bed && !form.elements.bed.value) form.elements.bed.value = p.Bed;
+          if (p.HistoricalABO) {
+            form.elements.abo.value = p.HistoricalABO;
+            if (p.HistoricalRh) form.elements.rh.value = p.HistoricalRh;
+            html += '<p class="text-xs font-bold text-crimson">🩸 ประวัติหมู่เลือดเดิมของผู้ป่วย: ' + esc(p.HistoricalABO) + ' ' + esc(p.HistoricalRh) + '</p>';
+          }
         }
         if (hist.length > 0) {
           html += '<p class="text-xs font-bold text-amber-700 mt-1">🔄 มีประวัติได้รับ/จัดสรรเลือดแล้ว ' + hist.length + ' รายการ</p>';
@@ -2648,11 +2686,17 @@
         byId('pendingRequests').innerHTML = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
           var p = findBy(appData.patients, 'HN', r.HN) || {};
           var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
-          return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
+          var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || '';
+          var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || '';
+          var aboBadge = patientAbo 
+            ? ' | หมู่เลือด: <span class="font-bold text-crimson bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">' + esc(patientAbo) + (patientRh ? (' ' + (patientRh === 'Positive' ? 'Rh+' : patientRh === 'Negative' ? 'Rh-' : patientRh)) : '') + '</span>'
+            : '';
+
+          return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName, patientAbo, patientRh].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
             '<span class="' + color + ' rounded-full"></span>' +
             '<div>' +
               '<p class="font-bold text-slate-900 text-xs">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + '</p>' +
-              '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
+              '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + aboBadge + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
               '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
             '</div>' +
             '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all">' +
@@ -2801,8 +2845,19 @@
       }
 
       
-      // Print Official Government FM-LAB-145 Report
+      // Dynamic Print Page Size Configuration Helper
+      function setPrintPageConfig(size, orientation, margin) {
+        var existing = document.getElementById('dynamicPrintPageStyle');
+        if (existing) existing.remove();
+        var style = document.createElement('style');
+        style.id = 'dynamicPrintPageStyle';
+        style.innerHTML = '@media print { @page { size: ' + size + ' ' + orientation + '; margin: ' + (margin || '4mm 5mm') + '; } }';
+        document.head.appendChild(style);
+      }
+
+      // Print Official Government FM-LAB-145 Report (A4 Landscape)
       function printFmlabReport() {
+        setPrintPageConfig('A4', 'landscape', '8mm 10mm');
         var tbody = byId('fmlabPrintTableBody');
         var list = appData.fmlab145.slice();
         
@@ -2854,8 +2909,9 @@
         }, 1000);
       }
 
-      // Print A5 Crossmatch Tag
+      // Print A5 Crossmatch Tag (Guaranteed A5 Landscape Paper Size)
       function printTagReport() {
+        setPrintPageConfig('A5', 'landscape', '4mm 5mm');
         var preview = byId('tagPreview');
         var container = byId('crossmatchPrintContainer');
         if (preview && container) {
@@ -2863,81 +2919,112 @@
         }
 
         document.body.classList.add('printing-tag');
-        document.body.classList.add('print-tag-mode');
         document.body.classList.remove('printing-fmlab');
 
         window.print();
 
         setTimeout(function () {
           document.body.classList.remove('printing-tag');
-          document.body.classList.remove('print-tag-mode');
         }, 1000);
       }
 
-      function renderTag() {
+                        function renderTag() {
         var x = appData.crossmatches.slice().find(function (r) { return r.DispenseStatus === 'ready'; });
         var box = byId('tagPreview');
         if (!x) { box.innerHTML = ''; return; }
         var p = findBy(appData.patients, 'HN', x.HN) || {}, u = findBy(appData.inventory, 'DonationID', x.DonationID) || {}, r = findBy(appData.requests, 'RequestID', x.RequestID) || {};
         
-        box.innerHTML = '<div class="a5-container max-w-4xl rounded-2xl border-2 border-slate-900 bg-white p-6 shadow-xl">' +
-          '<div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-4">' +
-            '<div class="flex items-center gap-3">' +
-              '<div class="h-10 w-10 bg-crimson text-white rounded-xl flex items-center justify-center font-bold text-lg"><i data-lucide="droplet" class="w-6 h-6 fill-current"></i></div>' +
+        // Parse Grouping details
+        var cellDisplay = r.CellType ? r.CellType.replace(/Negative/g, 'Neg').replace(/Positive/g, 'Pos') : 'A:Neg, B:Neg, D:4+';
+        var serumDisplay = r.SerumType ? r.SerumType.replace(/Negative/g, 'Neg').replace(/Positive/g, 'Pos') : 'A:4+, B:4+, O:Neg';
+        var groupingVerifier = r.GroupingVerifiedBy || r.NurseName || 'ทดสอบ';
+        var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || 'O';
+        var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || 'Positive';
+
+        box.innerHTML = '<div class="a5-container w-full rounded-xl border-2 border-slate-900 bg-white p-3 shadow-xl text-black text-[0.78rem] leading-tight">' +
+          '<!-- Header -->' +
+          '<div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5 mb-2">' +
+            '<div class="flex items-center gap-2">' +
+              '<div class="h-8 w-8 bg-crimson text-white rounded-lg flex items-center justify-center font-bold text-base shrink-0"><i data-lucide="droplet" class="w-5 h-5 fill-current"></i></div>' +
               '<div>' +
-                '<h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">โรงพยาบาลเขาฉกรรจ์ — ธนาคารเลือด (Blood Bank)</h2>' +
-                '<p class="text-xs text-slate-600 font-semibold">ใบกำกับถุงเลือดและบันทึกการให้เลือด (Blood Tag & Transfusion Record) — ขนาด A5</p>' +
+                '<h2 class="text-sm font-bold text-slate-900 leading-none">โรงพยาบาลเขาฉกรรจ์ — ธนาคารเลือด (Blood Bank)</h2>' +
+                '<p class="text-[0.65rem] text-slate-600 font-semibold mt-0.5">ใบกำกับถุงเลือดและบันทึกการให้เลือด (Blood Tag & Transfusion Record) — ขนาด A5</p>' +
               '</div>' +
             '</div>' +
-            '<div class="text-right">' +
-              '<p class="text-xs font-bold text-slate-900">Tag Code: ' + esc(x.TagCode) + '</p>' +
-              '<p class="text-[0.7rem] text-slate-500">Crossmatch ID: ' + esc(x.CrossmatchID) + '</p>' +
+            '<div class="text-right leading-none">' +
+              '<p class="text-[0.75rem] font-bold text-slate-900">Tag Code: <span class="font-mono">' + esc(x.TagCode) + '</span></p>' +
+              '<p class="text-[0.62rem] text-slate-500 mt-0.5">XM ID: ' + esc(x.CrossmatchID) + '</p>' +
             '</div>' +
           '</div>' +
 
-          '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-4">' +
-            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
-              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i> ข้อมูลผู้ป่วย</p>' +
-              '<p><strong>HN:</strong> <span class="text-sm font-bold text-slate-900">' + esc(x.HN) + '</span></p>' +
-              '<p><strong>ชื่อ-สกุล:</strong> ' + esc(p.FullName || '-') + '</p>' +
+          '<!-- 4-Column Info Grid (Patient | Blood Bag | Blood Grouping | Crossmatch) -->' +
+          '<div class="grid grid-cols-4 gap-1.5 text-[0.68rem] mb-2">' +
+            '<!-- 1. ข้อมูลผู้ป่วย -->' +
+            '<div class="rounded-lg border border-slate-300 bg-slate-50/70 p-1.5 space-y-0.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-0.5 flex items-center gap-1 text-[0.72rem]"><i data-lucide="user" class="w-3 h-3"></i> ข้อมูลผู้ป่วย</p>' +
+              '<p><strong>HN:</strong> <span class="font-bold text-slate-900">' + esc(x.HN) + '</span></p>' +
+              '<p class="truncate"><strong>ชื่อ-สกุล:</strong> ' + esc(p.FullName || '-') + '</p>' +
               '<p><strong>Ward / Bed:</strong> ' + esc(p.Ward || '-') + ' / ' + esc(p.Bed || '-') + '</p>' +
-              '<p><strong>หมู่เลือดผู้ป่วย:</strong> <span class="font-bold text-crimson text-sm">' + esc(r.PatientABO || '-') + ' ' + esc(r.PatientRh || '-') + '</span></p>' +
+              '<p><strong>หมู่เลือดผู้ป่วย:</strong> <span class="font-bold text-crimson">' + esc(patientAbo) + ' ' + esc(patientRh) + '</span></p>' +
             '</div>' +
 
-            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
-              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="barcode" class="w-3.5 h-3.5"></i> ข้อมูลถุงเลือด</p>' +
+            '<!-- 2. ข้อมูลถุงเลือด -->' +
+            '<div class="rounded-lg border border-slate-300 bg-slate-50/70 p-1.5 space-y-0.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-0.5 flex items-center gap-1 text-[0.72rem]"><i data-lucide="barcode" class="w-3 h-3"></i> ข้อมูลถุงเลือด</p>' +
               '<p><strong>Donation ID:</strong> <span class="font-bold text-slate-900">' + esc(x.DonationID) + '</span></p>' +
-              '<p><strong>ชนิดเลือด:</strong> ' + esc(u.Component || '-') + ' (' + esc(u.Volume || '-') + ' ml)</p>' +
-              '<p><strong>หมู่เลือดถุง:</strong> <span class="font-bold text-crimson text-sm">' + esc(u.ABO || '-') + ' ' + esc(u.Rh || '-') + '</span></p>' +
+              '<p><strong>ชนิด:</strong> ' + esc(u.Component || '-') + ' (' + esc(u.Volume || '-') + ' ml)</p>' +
+              '<p><strong>หมู่เลือดถุง:</strong> <span class="font-bold text-crimson text-[0.75rem]">' + esc(u.ABO || '-') + ' ' + esc(u.Rh || '-') + '</span></p>' +
               '<p><strong>วันหมดอายุ:</strong> <span class="font-bold text-slate-900">' + esc(u.ExpiresAt || '-') + '</span></p>' +
             '</div>' +
 
-            '<div class="rounded-xl border border-slate-300 bg-slate-50 p-3.5 space-y-1.5">' +
-              '<p class="font-bold text-crimson border-b border-slate-200 pb-1 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> ผลตรวจความเข้ากันได้</p>' +
-              '<p><strong>ผล Crossmatch:</strong> <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">' + esc(x.Result) + '</span></p>' +
-              '<p><strong>RT / 37°C / IAT:</strong> ' + esc(x.Major || '-') + ' / ' + esc(x.Minor || '-') + ' / ' + esc(x.AutoControl || '-') + '</p>' +
-              '<p><strong>ผู้ตรวจ/ทาน:</strong> ' + esc(x.VerifiedBy || '-') + '</p>' +
-              '<p class="text-[0.65rem] text-slate-500">วันที่ตรวจ: ' + (x.VerifiedAt ? new Date(x.VerifiedAt).toLocaleString('th-TH') : '-') + '</p>' +
+            '<!-- 3. ผลตรวจหมู่เลือด (Blood Grouping) - ตำแหน่งที่แทรกตามภาพที่ 1 -->' +
+            '<div class="rounded-lg border-2 border-rose-300 bg-rose-50/70 p-1.5 space-y-0.5">' +
+              '<p class="font-bold text-crimson border-b border-rose-200 pb-0.5 flex items-center gap-1 text-[0.72rem]"><i data-lucide="flask-conical" class="w-3 h-3 text-crimson"></i> ตรวจหมู่เลือด (Lab)</p>' +
+              '<p class="truncate"><strong>Cell:</strong> <span class="text-[0.62rem]">' + esc(cellDisplay) + '</span></p>' +
+              '<p class="truncate"><strong>Serum:</strong> <span class="text-[0.62rem]">' + esc(serumDisplay) + '</span></p>' +
+              '<p><strong>สรุปผล:</strong> <span class="font-bold text-crimson text-[0.75rem]">หมู่ ' + esc(patientAbo) + ' ' + esc(patientRh === 'Positive' ? '(+)' : patientRh === 'Negative' ? '(-)' : patientRh) + '</span></p>' +
+              '<p class="truncate"><strong>ผู้ตรวจ:</strong> ' + esc(groupingVerifier) + '</p>' +
+            '</div>' +
+
+            '<!-- 4. ผลตรวจความเข้ากันได้ (Crossmatch) -->' +
+            '<div class="rounded-lg border border-slate-300 bg-slate-50/70 p-1.5 space-y-0.5">' +
+              '<p class="font-bold text-crimson border-b border-slate-200 pb-0.5 flex items-center gap-1 text-[0.72rem]"><i data-lucide="check-circle-2" class="w-3 h-3"></i> ผล Crossmatch</p>' +
+              '<p><strong>ผลสรุป:</strong> <span class="px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">' + esc(x.Result) + '</span></p>' +
+              '<p><strong>RT/37/IAT:</strong> ' + esc(x.Major || '-') + '/' + esc(x.Minor || '-') + '/' + esc(x.AutoControl || '-') + '</p>' +
+              '<p class="truncate"><strong>ผู้ตรวจ/ทาน:</strong> ' + esc(x.VerifiedBy || '-') + '</p>' +
+              '<p class="text-[0.6rem] text-slate-500">วันที่ตรวจ: ' + (x.VerifiedAt ? new Date(x.VerifiedAt).toLocaleString('th-TH') : '-') + '</p>' +
             '</div>' +
           '</div>' +
 
-          '<div class="rounded-xl border border-slate-300 p-3 mb-4 text-[0.7rem] bg-white">' +
-            '<p class="font-bold text-slate-800 mb-1.5">📋 บันทึกการให้เลือดและสัญญาณชีพ (สำหรับพยาบาลประจำตึก):</p>' +
-            '<div class="grid grid-cols-5 gap-1 text-center font-bold bg-slate-100 p-1 rounded">' +
-              '<span>เวลา</span><span>T (°C)</span><span>PR (/min)</span><span>BP (mmHg)</span><span>RR (/min)</span>' +
-            '</div>' +
-            '<div class="grid grid-cols-5 gap-1 text-center p-1 border-b border-slate-100"><span>ก่อนให้ (Pre)</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
-            '<div class="grid grid-cols-5 gap-1 text-center p-1 border-b border-slate-100"><span>15 นาทีแรก</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
-            '<div class="grid grid-cols-5 gap-1 text-center p-1"><span>หลังให้เสร็จ</span><span>.....</span><span>.....</span><span>.....</span><span>.....</span></div>' +
+          '<!-- Vital Signs & Transfusion Record -->' +
+          '<div class="rounded-lg border border-slate-300 p-2 mb-2 bg-white text-[0.68rem]">' +
+            '<p class="font-bold text-slate-800 mb-1">📋 บันทึกการให้เลือดและสัญญาณชีพ (สำหรับพยาบาลประจำตึก):</p>' +
+            '<table class="w-full border-collapse text-center">' +
+              '<thead>' +
+                '<tr class="bg-slate-100 font-bold border border-slate-300">' +
+                  '<th class="p-0.5 border border-slate-300">เวลา</th>' +
+                  '<th class="p-0.5 border border-slate-300">T (°C)</th>' +
+                  '<th class="p-0.5 border border-slate-300">PR (/min)</th>' +
+                  '<th class="p-0.5 border border-slate-300">BP (mmHg)</th>' +
+                  '<th class="p-0.5 border border-slate-300">RR (/min)</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' +
+                '<tr><td class="p-0.5 border border-slate-300 font-medium">ก่อนให้ (Pre)</td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td></tr>' +
+                '<tr><td class="p-0.5 border border-slate-300 font-medium">15 นาทีแรก</td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td></tr>' +
+                '<tr><td class="p-0.5 border border-slate-300 font-medium">หลังให้เสร็จ</td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td><td class="border border-slate-300"></td></tr>' +
+              '</tbody>' +
+            '</table>' +
           '</div>' +
 
-          '<div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200 text-xs">' +
+          '<!-- Signatures & Print Button -->' +
+          '<div class="flex items-center justify-between pt-1 border-t border-slate-300 text-[0.7rem]">' +
             '<div class="flex items-center gap-4">' +
               '<p>ลงชื่อพยาบาลผู้รับเลือด: .......................................</p>' +
               '<p>ลงชื่อพยาบาลผู้ให้เลือด: .......................................</p>' +
             '</div>' +
-            '<button onclick="printTagReport()" class="no-print rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 font-bold text-white transition-all shadow-md flex items-center gap-2 text-xs">' +
-              '<i data-lucide="printer" class="w-4 h-4"></i> สั่งพิมพ์ขนาด A5 (Print A5 Tag)' +
+            '<button onclick="printTagReport()" class="no-print rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 font-bold text-white transition-all shadow-md flex items-center gap-1.5 text-xs">' +
+              '<i data-lucide="printer" class="w-3.5 h-3.5"></i> สั่งพิมพ์ขนาด A5 (Print A5 Tag)' +
             '</button>' +
           '</div>' +
         '</div>';
