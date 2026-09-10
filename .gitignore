@@ -6,6 +6,29 @@ Thumbs.db
 # Logs & temp
 *.log
 
+# Large files & Scanned documents
+*.pdf
+extracted_pdf_pages/
+
+# Build & Migration scratch scripts
+build_ebook_seed.js
+combine_seeds.js
+apply_ebook_feature.js
+integrate_ebook_module.js
+seed_part1.js
+seed_part2.js
+seed_part3.js
+ebook_records_seed.json
+
+# Database schemas (run manually in Supabase SQL editor)
+schema.sql
+schema_ebook.sql
+
+# Google Apps Script / clasp
+.clasp.json
+appsscript.json
+รหัส.js
+
 # Local environment
 .env
 .env.local
