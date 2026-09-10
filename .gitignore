@@ -1,0 +1,11 @@
+﻿# OS generated files
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+
+# Logs & temp
+*.log
+
+# Local environment
+.env
+.env.local
