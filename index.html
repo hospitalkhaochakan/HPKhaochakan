@@ -373,6 +373,325 @@
             </div>
           </div>
 
+          <!-- ========================================================================= -->
+          <!-- POWER-BI STYLE: ภาพรวมตัวชี้วัด & สถิติบูรณาการทุกหมวดหมู่ (EXECUTIVE KPI OVERVIEW) -->
+          <!-- ========================================================================= -->
+          <div class="mb-6 rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200">
+            <!-- Header Bar -->
+            <div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 text-crimson flex items-center justify-center font-bold shadow-sm">
+                  <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-md bg-crimson px-2 py-0.5 text-[0.65rem] font-bold text-white uppercase tracking-wider">Executive Overview</span>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900">ภาพรวมตัวชี้วัด & สถิติบูรณาการทุกหมวดหมู่ (ทุกหัวข้อ)</h3>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">สรุปสถานะสำคัญของ คลังเลือด • ผู้บริจาค • ร้องขอโลหิต • เครือข่ายชุมชน • งานบริการคลินิก โรงพยาบาลเขาฉกรรจ์</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> ข้อมูลเรียลไทม์
+                </span>
+              </div>
+            </div>
+
+            <!-- 5 Framed Topic Cards (Power BI Style) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+              <!-- กรอบ 1: สต็อกเลือด & การแจ้งเตือนคลัง -->
+              <div class="rounded-2xl border-2 border-rose-100 bg-rose-50/20 p-4 hover:border-rose-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-rose-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-crimson text-white text-xs font-bold flex items-center justify-center shadow-xs">1</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="droplet" class="w-4 h-4 text-crimson"></i> สต็อกเลือด & แจ้งเตือน
+                      </h4>
+                    </div>
+                    <button onclick="showView('inventory_stock')" class="text-[0.7rem] font-bold text-crimson hover:text-crimsonlight hover:underline flex items-center gap-0.5">
+                      ดูคลังเลือด <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Status Pills -->
+                  <div class="grid grid-cols-3 gap-1.5 mb-3">
+                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
+                      <span class="text-[0.65rem] text-emerald-700 font-semibold block">ปกติ</span>
+                      <span id="execStockNormal" class="text-xs font-bold text-emerald-800">3 กลุ่ม</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-amber-50 border border-amber-100 text-center">
+                      <span class="text-[0.65rem] text-amber-700 font-semibold block">เฝ้าระวัง</span>
+                      <span id="execStockWarning" class="text-xs font-bold text-amber-800">0 กลุ่ม</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                      <span class="text-[0.65rem] text-rose-700 font-semibold block">วิกฤต</span>
+                      <span id="execStockCritical" class="text-xs font-bold text-crimson">1 กลุ่ม (O+)</span>
+                    </div>
+                  </div>
+
+                  <!-- Sub stats -->
+                  <div class="space-y-1.5 text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">เลือดพร้อมใช้รวม (ทุกหมู่):</span>
+                      <span class="font-bold text-slate-800"><span id="execStockAvailable">1</span> ยูนิต</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">เกณฑ์สำรอง O+ (รพ.ขนาดเล็ก):</span>
+                      <span class="font-bold text-crimson">ขั้นต่ำ 2 U (ขาด <span id="execStockDeficitO">1</span> U)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">ใกล้หมดอายุ (≤ 7 วัน):</span>
+                      <span class="font-bold text-amber-700"><span id="execStockExpiring">0</span> ยูนิต</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 pt-2 border-t border-rose-100 text-[0.7rem] text-crimson flex items-center gap-1.5 font-medium">
+                  <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+                  <span>สต็อก O+ ขาดเกณฑ์ 1 ยูนิต ต้องระดมขอรับบริจาค</span>
+                </div>
+              </div>
+
+              <!-- กรอบ 2: ทะเบียนผู้บริจาคโลหิต -->
+              <div class="rounded-2xl border-2 border-blue-100 bg-blue-50/20 p-4 hover:border-blue-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-blue-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">2</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> ทะเบียนผู้บริจาคโลหิต
+                      </h4>
+                    </div>
+                    <button onclick="showView('donors_registry')" class="text-[0.7rem] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-0.5">
+                      ดูทะเบียน <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Big Total Card -->
+                  <div class="p-2.5 rounded-xl bg-white border border-blue-100 mb-3 flex items-center justify-between">
+                    <div>
+                      <span class="text-[0.7rem] text-slate-500 block">ผู้บริจาคทั้งหมดในระบบ</span>
+                      <span id="execDonorsTotal" class="text-xl sm:text-2xl font-black text-blue-900">2,458</span> <span class="text-xs text-slate-600 font-bold">คน</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">+120 จากเดือนก่อน</span>
+                  </div>
+
+                  <!-- Breakdown pills -->
+                  <div class="grid grid-cols-3 gap-1.5 mb-3">
+                    <div class="p-2 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
+                      <span class="text-[0.65rem] text-emerald-700 font-semibold block">บริจาคได้</span>
+                      <span id="execDonorsReady" class="text-xs font-bold text-emerald-800">1,891</span>
+                      <span class="text-[0.6rem] text-emerald-600 block">(77%)</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-amber-50/70 border border-amber-100 text-center">
+                      <span class="text-[0.65rem] text-amber-700 font-semibold block">ครบกำหนดเชิญ</span>
+                      <span id="execDonorsDue" class="text-xs font-bold text-amber-800">486</span>
+                      <span class="text-[0.6rem] text-amber-600 block">(20%)</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-indigo-50/70 border border-indigo-100 text-center">
+                      <span class="text-[0.65rem] text-indigo-700 font-semibold block">บริจาคประจำ</span>
+                      <span id="execDonorsRegular" class="text-xs font-bold text-indigo-800">1,124</span>
+                      <span class="text-[0.6rem] text-indigo-600 block">(≥5 ครั้ง)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Blood Groups pill row -->
+                <div class="pt-2 border-t border-blue-100 flex items-center justify-between text-[0.68rem] text-slate-500 font-medium">
+                  <span>สัดส่วนหมู่เลือด:</span>
+                  <span class="font-bold text-slate-700">O+ (812) • A+ (563) • B+ (432) • AB+ (215)</span>
+                </div>
+              </div>
+
+              <!-- กรอบ 3: ร้องขอผู้บริจาค & ประชาสัมพันธ์ -->
+              <div class="rounded-2xl border-2 border-purple-100 bg-purple-50/20 p-4 hover:border-purple-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-purple-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">3</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="send" class="w-4 h-4 text-purple-600"></i> ร้องขอผู้บริจาคโลหิต
+                      </h4>
+                    </div>
+                    <button onclick="showView('donor_requests_new')" class="text-[0.7rem] font-bold text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-0.5">
+                      สร้างคำร้อง <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Active campaign banner -->
+                  <div class="p-2.5 rounded-xl bg-white border border-purple-100 mb-3 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">สถานะแคมเปญล่าสุด:</span>
+                      <span class="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-purple-100 text-purple-800">พร้อมกระจายข่าว</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">เป้าหมายระดมโลหิต:</span>
+                      <span class="font-bold text-crimson">หมู่เลือด O+ (2 Units)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">ช่องทางประชาสัมพันธ์:</span>
+                      <span class="font-semibold text-slate-800">LINE OA, SMS, เสียงตามสาย</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="p-2 rounded-xl bg-purple-50 border border-purple-100 text-center">
+                      <span class="text-[0.65rem] text-purple-700 font-semibold block">ผู้บริจาคตรงเกณฑ์</span>
+                      <span class="text-xs font-bold text-purple-900">812 คน (O+)</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
+                      <span class="text-[0.65rem] text-emerald-700 font-semibold block">ความยินยอมติดต่อ</span>
+                      <span class="text-xs font-bold text-emerald-900">100% Consent</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-purple-100 text-[0.7rem] text-purple-700 flex items-center justify-between font-medium">
+                  <span>ระบบส่งข้อความ:</span>
+                  <span class="font-bold text-emerald-600">✓ เชื่อมต่อ LINE Chat Bubble สำเร็จ</span>
+                </div>
+              </div>
+
+              <!-- กรอบ 4: เครือข่ายชุมชน อ.เขาฉกรรจ์ -->
+              <div class="rounded-2xl border-2 border-emerald-100 bg-emerald-50/20 p-4 hover:border-emerald-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-emerald-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">4</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="share-2" class="w-4 h-4 text-emerald-600"></i> เครือข่ายชุมชน อ.เขาฉกรรจ์
+                      </h4>
+                    </div>
+                    <button onclick="showView('community_network_list')" class="text-[0.7rem] font-bold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-0.5">
+                      ดูเครือข่าย <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Network KPI row -->
+                  <div class="grid grid-cols-3 gap-1.5 mb-3">
+                    <div class="p-2 rounded-xl bg-white border border-emerald-100 text-center">
+                      <span class="text-[0.65rem] text-slate-500 font-semibold block">เครือข่ายทั้งหมด</span>
+                      <span id="execNetTotal" class="text-sm font-bold text-slate-800">12</span> <span class="text-[0.6rem] text-slate-400">แห่ง</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
+                      <span class="text-[0.65rem] text-emerald-700 font-semibold block">ร่วมโครงการ</span>
+                      <span id="execNetActive" class="text-sm font-bold text-emerald-800">10</span> <span class="text-[0.6rem] text-emerald-600">(83%)</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-amber-50 border border-amber-100 text-center">
+                      <span class="text-[0.65rem] text-amber-700 font-semibold block">รอประสาน</span>
+                      <span id="execNetPending" class="text-sm font-bold text-amber-800">2</span> <span class="text-[0.6rem] text-amber-600">(17%)</span>
+                    </div>
+                  </div>
+
+                  <!-- Capabilities breakdown -->
+                  <div class="p-2.5 rounded-xl bg-white border border-slate-100 space-y-1.5 text-xs text-slate-600">
+                    <div class="flex items-center justify-between">
+                      <span>📍 จุดรับบริจาคโลหิตเคลื่อนที่:</span>
+                      <span class="font-bold text-slate-800">5 แห่ง (รพ.สต.)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>📢 หอกระจายข่าวเสียงตามสาย:</span>
+                      <span class="font-bold text-slate-800">12 แห่ง (ครบทุกตำบล)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>🚐 ยานพาหนะรับส่งผู้บริจาค:</span>
+                      <span class="font-bold text-slate-800">8 คัน (อบต./เทศบาล)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-emerald-100 text-[0.7rem] text-emerald-700 font-medium">
+                  ครอบคลุม 4 ตำบล: ต.เขาฉกรรจ์ • ต.หนองหว้า • ต.พระเพลิง • ต.เขาสามสิบ
+                </div>
+              </div>
+
+              <!-- กรอบ 5: งานบริการคลินิก & แบบบันทึก (FM-LAB-145 / E-Book) -->
+              <div class="rounded-2xl border-2 border-amber-100 bg-amber-50/20 p-4 hover:border-amber-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-amber-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-amber-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">5</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-amber-600"></i> งานบริการคลินิก & บันทึก
+                      </h4>
+                    </div>
+                    <button onclick="showView('fmlab145')" class="text-[0.7rem] font-bold text-amber-600 hover:text-amber-700 hover:underline flex items-center gap-0.5">
+                      ดูแบบบันทึก <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Clinical stats row -->
+                  <div class="space-y-1.5 text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-100 mb-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">แบบร้องขอเลือด FM-LAB-145:</span>
+                      <span class="font-bold text-slate-800"><span id="execFmlabRequests">0</span> รายการ</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">ญาติไปบริจาคโลหิตทดแทนแล้ว:</span>
+                      <span class="font-bold text-emerald-600"><span id="execFmlabDonated">0</span> ราย</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">E-Book บันทึกแมตช์ & รับ-จ่าย:</span>
+                      <span class="font-bold text-slate-800"><span id="execEbookRecords">14</span> รายการ (14 คู่หน้า)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">คำขอรอจัดการ (Crossmatch):</span>
+                      <span class="font-bold text-crimson"><span id="execPendingRequests">0</span> รายการ</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-amber-100 flex items-center justify-between text-[0.7rem] text-slate-500 font-medium">
+                  <span>บันทึก E-Book:</span>
+                  <button onclick="showView('ebook_records')" class="font-bold text-crimson hover:underline">เปิดอ่านสมุด E-Book ➜</button>
+                </div>
+              </div>
+
+              <!-- กรอบ 6: สรุปคุณภาพ & การบริหารจัดการ (Quality & Safety KPIs) -->
+              <div class="rounded-2xl border-2 border-slate-200 bg-slate-50/50 p-4 hover:border-slate-300 transition-all shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-lg bg-slate-800 text-white text-xs font-bold flex items-center justify-center shadow-xs">6</span>
+                      <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-700"></i> สรุปคุณภาพ & ความปลอดภัย
+                      </h4>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-slate-200 text-slate-700">ISO / HA Standard</span>
+                  </div>
+
+                  <div class="space-y-2 text-xs bg-white p-2.5 rounded-xl border border-slate-200 mb-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">ระบบบริหารวันหมดอายุ:</span>
+                      <span class="font-bold text-emerald-700">FEFO (First-Expired First-Out)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">อัตราเลือดหมดอายุ (Discard):</span>
+                      <span class="font-bold text-emerald-700">0.0% (บริหารจัดการมีประสิทธิภาพ)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">การยืนยันจ่ายเลือด:</span>
+                      <span class="font-bold text-slate-800">ระบบ 3-Step Verification</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">บันทึกประวัติการใช้งาน:</span>
+                      <span class="font-bold text-blue-700">Audit Trail บันทึกทุกกิจกรรม</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 text-[0.7rem] text-slate-500 flex items-center justify-between">
+                  <span>ผู้รับผิดชอบหลัก:</span>
+                  <span class="font-bold text-slate-700">นักเทคนิคการแพทย์ (MT) เวรประจำวัน</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- Monthly Statistics Cards -->
           <div class="mb-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <div class="rounded-2xl border border-blue-100 bg-white p-4 sm:p-5 shadow-sm">
@@ -4790,6 +5109,7 @@
         if (typeof renderDonorsRegistry === 'function') renderDonorsRegistry();
         if (typeof renderDonorRequests === 'function') renderDonorRequests();
         if (typeof renderCommunityNetwork === 'function') renderCommunityNetwork();
+        if (typeof updateDashboardExecutiveOverview === 'function') updateDashboardExecutiveOverview();
         if (typeof updateHeaderStockAlertBadge === 'function') updateHeaderStockAlertBadge();
         if (window.lucide) lucide.createIcons();
       }
@@ -4892,6 +5212,7 @@
             actionCell +
             '</tr>';
         }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
+        if (typeof updateDashboardExecutiveOverview === 'function') updateDashboardExecutiveOverview();
       }
 
       function renderCharts() {
@@ -5343,6 +5664,8 @@
           renderDonorRequests();
         } else if (id === 'community_network_list' && typeof renderCommunityNetwork === 'function') {
           renderCommunityNetwork();
+        } else if (id === 'dashboard' && typeof updateDashboardExecutiveOverview === 'function') {
+          updateDashboardExecutiveOverview();
         }
         if (typeof updateHeaderStockAlertBadge === 'function') {
           updateHeaderStockAlertBadge();

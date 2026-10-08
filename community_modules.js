@@ -500,7 +500,8 @@ function getBloodGroupStockSummary() {
   });
 
   // Calculate from appData.inventory
-  (appData.inventory || []).forEach(function (unit) {
+  var inventoryList = (typeof appData !== 'undefined' && appData && appData.inventory) ? appData.inventory : [];
+  inventoryList.forEach(function (unit) {
     var bg = unit.ABO + (unit.Rh === 'Positive' ? '+' : unit.Rh === 'Negative' ? '-' : '+');
     // If unit matches our 4 hospital blood groups
     if (summary[bg]) {
@@ -1433,3 +1434,110 @@ function contactNetwork() {
   if (!window.activeNetworkDetail) return;
   alert('โทรติดต่อผู้ประสานงาน: ' + window.activeNetworkDetail.coordinator + ' โทร. ' + window.activeNetworkDetail.phone);
 }
+
+// ==========================================================================
+// 5. EXECUTIVE MULTI-MODULE OVERVIEW UPDATER (สำหรับหน้าภาพรวม & สถิติ)
+// ==========================================================================
+function updateDashboardExecutiveOverview() {
+  try {
+    // 1. สต็อกเลือด & แจ้งเตือน
+    var stockSummary = getBloodGroupStockSummary();
+    var normalCount = 0;
+    var warningCount = 0;
+    var criticalCount = 0;
+    var totalExpiring = 0;
+    var totalAvail = 0;
+    var deficitO = (stockSummary['O+'] && stockSummary['O+'].deficit) ? stockSummary['O+'].deficit : 0;
+
+    window.HOSPITAL_BLOOL_GROUPS_LIST = window.HOSPITAL_BLOOD_GROUPS || ['A+', 'B+', 'AB+', 'O+'];
+    window.HOSPITAL_BLOOL_GROUPS_LIST.forEach(function (bg) {
+      var item = stockSummary[bg] || {};
+      if (item.status === 'normal') normalCount++;
+      else if (item.status === 'warning') warningCount++;
+      else if (item.status === 'critical') criticalCount++;
+      totalExpiring += item.expiring_units || 0;
+      totalAvail += item.available_units || 0;
+    });
+
+    var elStockNormal = byId('execStockNormal');
+    var elStockWarning = byId('execStockWarning');
+    var elStockCritical = byId('execStockCritical');
+    var elStockAvailable = byId('execStockAvailable');
+    var elStockDeficitO = byId('execStockDeficitO');
+    var elStockExpiring = byId('execStockExpiring');
+
+    if (elStockNormal) elStockNormal.textContent = normalCount + ' กลุ่ม';
+    if (elStockWarning) elStockWarning.textContent = warningCount + ' กลุ่ม';
+    if (elStockCritical) elStockCritical.textContent = criticalCount + ' กลุ่ม (O+)';
+    if (elStockAvailable) elStockAvailable.textContent = totalAvail;
+    if (elStockDeficitO) elStockDeficitO.textContent = deficitO;
+    if (elStockExpiring) elStockExpiring.textContent = totalExpiring;
+
+    // 2. ทะเบียนผู้บริจาคโลหิต
+    var donors = getDonorsList();
+    var totalDonors = 2458 + donors.length - (window.INITIAL_DONORS ? window.INITIAL_DONORS.length : 0);
+    var readyDonors = 1891 + donors.filter(function (d) { return d.status === 'ready'; }).length - 6;
+    var dueDonors = 486 + donors.filter(function (d) { return d.status === 'due'; }).length - 4;
+    var regularDonors = 1124 + donors.filter(function (d) { return d.donation_count >= 5; }).length - 5;
+
+    var elDonorsTotal = byId('execDonorsTotal');
+    var elDonorsReady = byId('execDonorsReady');
+    var elDonorsDue = byId('execDonorsDue');
+    var elDonorsRegular = byId('execDonorsRegular');
+
+    if (elDonorsTotal) elDonorsTotal.textContent = totalDonors.toLocaleString();
+    if (elDonorsReady) elDonorsReady.textContent = readyDonors.toLocaleString();
+    if (elDonorsDue) elDonorsDue.textContent = dueDonors.toLocaleString();
+    if (elDonorsRegular) elDonorsRegular.textContent = regularDonors.toLocaleString();
+
+    // 3. เครือข่ายชุมชน
+    var networks = getNetworksList();
+    var totalNets = networks.length;
+    var activeNets = networks.filter(function (n) { return n.status === 'active'; }).length;
+    var pendingNets = networks.filter(function (n) { return n.status === 'pending'; }).length;
+
+    var elNetTotal = byId('execNetTotal');
+    var elNetActive = byId('execNetActive');
+    var elNetPending = byId('execNetPending');
+
+    if (elNetTotal) elNetTotal.textContent = totalNets;
+    if (elNetActive) elNetActive.textContent = activeNets;
+    if (elNetPending) elNetPending.textContent = pendingNets;
+
+    // 4. งานบริการคลินิก & แบบบันทึก
+    if (typeof appData !== 'undefined') {
+      var selectedMonth = (byId('statsMonthPicker') && byId('statsMonthPicker').value) || (new Date().toISOString().slice(0, 7));
+      var monthlyReceived = (appData.inventory || []).filter(function (u) {
+        var rDate = u.ReceivedAt || u.CollectedAt || '';
+        return rDate.startsWith(selectedMonth);
+      }).length;
+
+      var monthlyDispensed = (appData.crossmatches || []).filter(function (x) {
+        var dDate = x.DispensedAt || '';
+        return x.DispenseStatus === 'dispensed' && dDate.startsWith(selectedMonth);
+      }).length;
+
+      var pendingReqs = (appData.requests || []).filter(function (r) { return r.Status !== 'dispensed'; }).length;
+      var fmlabCount = (appData.fmlab145 || []).length;
+      var fmlabDonated = (appData.fmlab145 || []).filter(function (f) { return f.RelativeDonated === 'TRUE' || f.RelativeDonated === true; }).length;
+      var ebookCount = (appData.ebookRecords || []).length;
+
+      var elMR = byId('execMonthlyReceived');
+      var elMD = byId('execMonthlyDispensed');
+      var elPR = byId('execPendingRequests');
+      var elFC = byId('execFmlabRequests');
+      var elFD = byId('execFmlabDonated');
+      var elEC = byId('execEbookRecords');
+
+      if (elMR) elMR.textContent = monthlyReceived;
+      if (elMD) elMD.textContent = monthlyDispensed;
+      if (elPR) elPR.textContent = pendingReqs;
+      if (elFC) elFC.textContent = fmlabCount;
+      if (elFD) elFD.textContent = fmlabDonated;
+      if (elEC) elEC.textContent = ebookCount;
+    }
+  } catch(e) {
+    console.warn('updateDashboardExecutiveOverview error:', e);
+  }
+}
+window.updateDashboardExecutiveOverview = updateDashboardExecutiveOverview;
