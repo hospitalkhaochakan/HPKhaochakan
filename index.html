@@ -3102,6 +3102,9 @@
       var html5QrCodeScanner = null;
 
       var menus = [
+        // 1. ภาพรวม & สถิติ (Top-level Executive Dashboard - เมนูแรกด้านบนสุด)
+        { id: 'dashboard', label: 'ภาพรวม & สถิติ', icon: 'layout-dashboard', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE', 'USER'], mobile: true },
+
         // 4 Community & Blood Stock Accordions (matching screenshots)
         {
           id: 'inventory_group',
@@ -3159,8 +3162,8 @@
             { id: 'community_network_logs', label: 'ประวัติการประสานงาน', roles: ['ADMIN', 'MT'] }
           ]
         },
+
         // Existing Clinical & Laboratory Menus
-        { id: 'dashboard', label: 'ภาพรวม & สถิติ', icon: 'layout-dashboard', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE', 'USER'], mobile: true },
         { id: 'patients', label: 'จองเลือด / ผู้ป่วย', icon: 'clipboard-check', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE'], mobile: true },
         { id: 'fmlab145', label: 'แบบร้องขอโลหิต (FM-LAB-145)', icon: 'file-spreadsheet', roles: ['ADMIN', 'MT'], mobile: true },
         { id: 'receiving', label: 'รับเลือด / Barcode', icon: 'barcode', roles: ['ADMIN', 'MT'], mobile: true },
@@ -5558,9 +5561,14 @@
         // 1. Desktop Menu
         var dHtml = '';
         var hasAddedSectionDivider = false;
+        var hasAddedCommunityDivider = false;
 
         allowed.forEach(function (m) {
           if (m.isGroup) {
+            if (!hasAddedCommunityDivider) {
+              hasAddedCommunityDivider = true;
+              dHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">คลังเลือดและชุมชน</div>';
+            }
             var subAllowed = (m.subItems || []).filter(function (s) { return !s.roles || s.roles.indexOf(role) >= 0; });
             var isOpen = !!accordionState[m.id];
             dHtml += '<div class="mb-1">' +
@@ -5580,7 +5588,7 @@
               '</div>' +
             '</div>';
           } else {
-            if (!hasAddedSectionDivider && m.id === 'dashboard') {
+            if (!hasAddedSectionDivider && m.id === 'patients') {
               hasAddedSectionDivider = true;
               dHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">งานบริการธนาคารเลือด</div>';
             }
@@ -5598,8 +5606,13 @@
 
         // 2. Slide Drawer Menu (Mobile Drawer)
         var mDrawerHtml = '';
+        var hasAddedDrawerCommDivider = false;
         allowed.forEach(function (m) {
           if (m.isGroup) {
+            if (!hasAddedDrawerCommDivider) {
+              hasAddedDrawerCommDivider = true;
+              mDrawerHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-3 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">คลังเลือดและชุมชน</div>';
+            }
             var subAllowed = (m.subItems || []).filter(function (s) { return !s.roles || s.roles.indexOf(role) >= 0; });
             var isOpen = !!accordionState[m.id];
             mDrawerHtml += '<div class="mb-1.5">' +
@@ -5618,6 +5631,9 @@
               '</div>' +
             '</div>';
           } else {
+            if (m.id === 'patients') {
+              mDrawerHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-3 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">งานบริการธนาคารเลือด</div>';
+            }
             mDrawerHtml += '<button class="drawer-nav flex items-center gap-3 rounded-xl px-4 py-2.5 text-left font-bold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-xs" data-view="' + m.id + '">' +
               '<i data-lucide="' + m.icon + '" class="w-4 h-4 text-crimson"></i> ' + m.label +
             '</button>';
@@ -5628,10 +5644,10 @@
 
         // 3. Bottom Mobile Menu (Core quick links)
         var bottomNavItems = [
+          { id: 'dashboard', label: 'ภาพรวม', icon: 'layout-dashboard' },
           { id: 'inventory_stock', label: 'สต็อกเลือด', icon: 'archive' },
           { id: 'donors_registry', label: 'ผู้บริจาค', icon: 'user-check' },
           { id: 'fmlab145', label: 'ขอเลือด', icon: 'file-spreadsheet' },
-          { id: 'crossmatch', label: 'Crossmatch', icon: 'git-compare' },
           { id: 'ebook_records', label: 'E-Book', icon: 'book-open' }
         ];
         byId('bottomNav').innerHTML = bottomNavItems.map(function (m) {
