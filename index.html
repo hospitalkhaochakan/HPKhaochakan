@@ -67,10 +67,10 @@
       body.role-DOCTOR .doctor-only, body.role-ADMIN .doctor-only { display: block; }
       body.role-NURSE .nurse-only, body.role-ADMIN .nurse-only { display: block; }
 
-      .field { display: grid; gap: 0.25rem; color: #475569; font-size: 0.85rem; font-weight: 600; }
+      .field { display: grid; gap: 0.25rem; color: #475569; font-size: 0.8rem; font-weight: 600; }
       .field input, .field select, .field textarea {
-        min-height: 2.75rem; border: 1px solid #cbd5e1; border-radius: 0.625rem; background: #ffffff;
-        padding: 0 0.75rem; color: #0f172a; outline: none; width: 100%; font-size: 0.9rem;
+        min-height: 2.5rem; border: 1px solid #cbd5e1; border-radius: 0.625rem; background: #ffffff;
+        padding: 0 0.75rem; color: #0f172a; outline: none; width: 100%; font-size: 0.85rem;
         transition: all 0.2s ease;
       }
       .field input:focus, .field select:focus, .field textarea:focus {
@@ -190,7 +190,7 @@
       }
     </style>
   </head>
-  <body class="guest text-ink selection:bg-rose-200 selection:text-rose-900">
+  <body class="guest text-ink selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden w-full max-w-full">
 
     <!-- Global Loader -->
     <div id="globalLoader" class="loader fixed inset-0 z-[100] place-items-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -258,49 +258,47 @@
     </section>
 
     <!-- App Shell -->
-    <div id="appShell" class="app-only min-h-screen pb-20 lg:pb-0">
+    <div id="appShell" class="app-only min-h-screen pb-20 lg:pb-0 overflow-x-hidden w-full max-w-full">
       
-      <!-- Top Header -->
-      <header class="no-print sticky top-0 z-30 border-b border-rose-900 bg-gradient-to-r from-crimson via-crimson to-crimsonlight text-white px-3 py-2.5 sm:px-6 sm:py-3 shadow-md lg:ml-60">
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
+      <!-- Top Header (Compact & Mobile-Responsive, No logout in header) -->
+      <header class="no-print sticky top-0 z-30 border-b border-rose-900 bg-gradient-to-r from-crimson via-crimson to-crimsonlight text-white px-2.5 py-2 sm:px-6 sm:py-3 shadow-md lg:ml-60 w-full overflow-hidden">
+        <div class="flex items-center justify-between gap-2 sm:gap-3">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
             <!-- Hamburger Menu Button (Mobile / Tablet only) -->
-            <button id="toggleDrawerBtn" class="flex lg:hidden h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/20 shadow-sm" title="เปิด/ปิด แถบเมนู">
-              <i data-lucide="menu" class="w-6 h-6"></i>
+            <button id="toggleDrawerBtn" class="flex lg:hidden h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/20 shadow-sm" title="เปิด/ปิด แถบเมนู">
+              <i data-lucide="menu" class="w-4 h-4 sm:w-5 sm:h-5"></i>
             </button>
 
-            <div class="h-10 w-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-inner hidden sm:flex">
-              <i data-lucide="droplet" class="w-6 h-6 fill-current text-white"></i>
+            <div class="h-9 w-9 bg-white/20 backdrop-blur-md rounded-xl items-center justify-center border border-white/30 shadow-inner hidden sm:flex shrink-0">
+              <i data-lucide="droplet" class="w-5 h-5 fill-current text-white"></i>
             </div>
-            <div>
-              <h1 class="text-base font-bold sm:text-xl tracking-tight leading-tight flex items-center gap-2">
-                ระบบธนาคารเลือด
-                <span class="text-[0.65rem] font-semibold bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline">Supabase</span>
+            <div class="min-w-0">
+              <h1 class="text-xs sm:text-lg font-bold tracking-tight leading-tight flex items-center gap-1.5 truncate">
+                <span>ระบบธนาคารเลือด</span>
+                <span class="text-[0.6rem] font-semibold bg-white/20 px-1.5 py-0.2 rounded-full uppercase tracking-wider hidden md:inline">Supabase</span>
               </h1>
-              <p class="text-[0.7rem] sm:text-xs text-rose-100 font-medium">โรงพยาบาลเขาฉกรรจ์</p>
+              <p class="text-[0.62rem] sm:text-xs text-rose-100 font-medium truncate">โรงพยาบาลเขาฉกรรจ์</p>
             </div>
           </div>
           
-          <div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+          <div class="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
             <div class="relative hidden max-w-xs sm:block w-full">
               <input id="globalSearch" class="h-9 w-full rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm pl-8 pr-3 text-xs text-white placeholder-rose-200 outline-none focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-rose-300 transition-all shadow-inner" placeholder="ค้นหา HN, Donation ID, Barcode, ผู้ป่วย...">
               <i data-lucide="search" class="w-4 h-4 text-rose-200 absolute left-2.5 top-2.5"></i>
             </div>
 
             <!-- Top Notification Bell -->
-            <button onclick="showStockAlertNotification()" class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/20 shadow-sm" title="การแจ้งเตือนสต็อก">
+            <button onclick="showStockAlertNotification()" class="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/20 shadow-sm" title="การแจ้งเตือนสต็อก">
               <i data-lucide="bell" class="w-4 h-4"></i>
-              <span id="topNotificationBadge" class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-600 text-[0.62rem] font-bold text-white flex items-center justify-center shadow-md animate-pulse">1</span>
+              <span id="topNotificationBadge" class="absolute -top-1 -right-1 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-red-600 text-[0.58rem] sm:text-[0.62rem] font-bold text-white flex items-center justify-center shadow-md animate-pulse">1</span>
             </button>
 
-            <div class="min-w-0 flex items-center gap-2 border-l border-white/20 pl-2 sm:pl-3 text-right">
-              <div>
-                <p id="currentUserName" class="truncate font-bold text-xs leading-tight max-w-[120px] sm:max-w-[180px]">นายสุรศักดิ์ ดาเนตรปราชญ์</p>
-                <p id="currentUserRole" class="text-[0.7rem] text-rose-200">เจ้าหน้าที่ธนาคารเลือด</p>
+            <!-- User Info: Clean & Compact (No logout button in header) -->
+            <div class="min-w-0 flex items-center border-l border-white/20 pl-2 sm:pl-3 text-right">
+              <div class="max-w-[105px] xs:max-w-[140px] sm:max-w-[180px]">
+                <p id="currentUserName" class="truncate font-bold text-[0.72rem] sm:text-xs leading-tight">นายสุรศักดิ์ ดาเนตรปราชญ์</p>
+                <p id="currentUserRole" class="truncate text-[0.62rem] sm:text-[0.7rem] text-rose-200 leading-tight">เจ้าหน้าที่ธนาคารเลือด</p>
               </div>
-              <button id="logoutTopBtn" class="lg:hidden rounded-lg bg-white/10 hover:bg-white/20 px-2.5 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 transition-colors border border-white/30 backdrop-blur-sm">
-                <i data-lucide="log-out" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">ออก</span>
-              </button>
             </div>
           </div>
         </div>
@@ -318,6 +316,11 @@
           </div>
         </div>
         <nav id="desktopMenu" class="flex flex-col gap-1 flex-1 overflow-y-auto pr-0.5 pb-2"></nav>
+        <div class="pt-2 border-t border-slate-100 shrink-0">
+          <button onclick="openLogoutModal()" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-1.5 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-crimson transition-colors">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> ออกจากระบบ
+          </button>
+        </div>
       </aside>
 
       <!-- Slide-over Drawer Menu (For Mobile, Tablet, & Screen Overlay) -->
@@ -350,25 +353,25 @@
       </div>
 
       <!-- Main Content -->
-      <main class="px-3 py-4 sm:px-5 lg:ml-60 lg:px-6">
+      <main class="px-2.5 py-3 sm:px-5 lg:ml-60 lg:px-6 max-w-full overflow-x-hidden">
         
         <!-- 1. DASHBOARD & MONTHLY STATS -->
         <section id="dashboard" class="view active">
-          <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div class="mb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 sm:gap-3">
             <div>
-              <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="layout-dashboard" class="w-6 h-6 text-crimson"></i> ภาพรวมคลังเลือด & สถิติรายเดือน
+              <h2 class="text-lg sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 sm:w-6 sm:h-6 text-crimson"></i> ภาพรวมคลังเลือด & สถิติรายเดือน
               </h2>
-              <p class="text-xs font-medium text-slate-500">สรุปข้อมูลสถิติคลังเลือด ยอดรับเข้า-จ่ายออก-คงเหลือ รายเดือน</p>
+              <p class="text-[0.72rem] sm:text-xs font-medium text-slate-500">สรุปข้อมูลสถิติคลังเลือด ยอดรับเข้า-จ่ายออก-คงเหลือ รายเดือน</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm text-xs font-semibold text-slate-700">
-                <i data-lucide="calendar" class="w-4 h-4 text-crimson"></i>
-                <span>เลือกเดือน:</span>
-                <input id="statsMonthPicker" type="month" class="outline-none text-xs font-bold text-crimson bg-transparent cursor-pointer">
+              <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm text-xs font-semibold text-slate-700">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-crimson"></i>
+                <span class="text-[0.72rem] sm:text-xs">เดือน:</span>
+                <input id="statsMonthPicker" type="month" class="outline-none text-[0.72rem] sm:text-xs font-bold text-crimson bg-transparent cursor-pointer">
               </div>
-              <button id="refreshBtn" class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson transition-all px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-2">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i> รีเฟรช
+              <button id="refreshBtn" class="rounded-xl bg-gradient-to-r from-crimson to-crimsonlight hover:from-crimsonlight hover:to-crimson transition-all px-3 py-1.5 sm:px-4 sm:py-2 text-[0.72rem] sm:text-xs font-bold text-white shadow-sm flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> รีเฟรช
               </button>
             </div>
           </div>
@@ -877,23 +880,23 @@
 
         <!-- 2. FM-LAB-145-00 (NEW: สำหรับนักเทคนิคการแพทย์ MT) -->
         <section id="fmlab145" class="view">
-          <div class="mb-4 border-b border-slate-200 pb-2 flex flex-wrap items-center justify-between gap-3">
+          <div class="mb-4 border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div class="flex items-center gap-2">
-                <span class="rounded-lg bg-crimson px-2.5 py-0.5 text-[0.7rem] font-bold text-white uppercase tracking-wider">FM-LAB-145-00</span>
-                <h2 class="text-xl font-bold text-slate-900">แบบบันทึกการร้องขอโลหิต (กลุ่มงานเทคนิคการแพทย์)</h2>
+                <span class="rounded-lg bg-crimson px-2 py-0.5 text-[0.65rem] sm:text-[0.7rem] font-bold text-white uppercase tracking-wider shrink-0">FM-LAB-145-00</span>
+                <h2 class="text-base sm:text-xl font-bold text-slate-900 leading-snug">แบบบันทึกการร้องขอโลหิต (กลุ่มงานเทคนิคการแพทย์)</h2>
               </div>
-              <p class="text-xs text-slate-500 mt-1">บันทึกข้อมูลการร้องขอโลหิตตามแบบฟอร์มโรงพยาบาล พร้อมติดตามสถานะญาติไปบริจาคโลหิตทดแทน</p>
+              <p class="text-[0.72rem] sm:text-xs text-slate-500 mt-1 leading-normal">บันทึกข้อมูลการร้องขอโลหิตตามแบบฟอร์มโรงพยาบาล พร้อมติดตามสถานะญาติไปบริจาคโลหิตทดแทน</p>
             </div>
-            <div class="flex gap-2">
-              <button onclick="printFmlabReport()" class="no-print rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
-                <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์แบบฟอร์ม FM-LAB-145
+            <div class="flex gap-2 w-full sm:w-auto">
+              <button onclick="printFmlabReport()" class="no-print w-full sm:w-auto justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> พิมพ์แบบฟอร์ม FM-LAB-145
               </button>
             </div>
           </div>
 
           <!-- Entry Form -->
-          <form id="fmlabForm" class="mb-6 grid gap-4 rounded-2xl bg-white p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-4">
+          <form id="fmlabForm" class="mb-6 grid gap-3 sm:gap-4 rounded-2xl bg-white p-3.5 sm:p-6 shadow-sm border border-slate-100 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="recordId">
             <label class="field">
               <span>วันที่ร้องขอ *</span>
@@ -3293,7 +3296,8 @@
 
       function bindEvents() {
         byId('loginForm').addEventListener('submit', login);
-        byId('logoutTopBtn').addEventListener('click', openLogoutModal);
+        var topLogout = byId('logoutTopBtn');
+        if (topLogout) topLogout.addEventListener('click', openLogoutModal);
         byId('cancelLogout').addEventListener('click', closeLogoutModal);
         byId('confirmLogout').addEventListener('click', logout);
         byId('refreshBtn').addEventListener('click', loadAllData);
@@ -3604,9 +3608,9 @@
 
       function applyAuthenticatedUser() {
         if (!currentUser) return;
-        document.body.className = 'auth role-' + currentUser.Role + ' bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900';
-        byId('currentUserName').textContent = currentUser.FullName || currentUser.Username;
-        byId('currentUserRole').textContent = 'สิทธิ์: ' + currentUser.Role;
+        document.body.className = 'auth role-' + currentUser.Role + ' bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden w-full max-w-full';
+        if (byId('currentUserName')) byId('currentUserName').textContent = currentUser.FullName || currentUser.Username;
+        if (byId('currentUserRole')) byId('currentUserRole').textContent = 'สิทธิ์: ' + currentUser.Role;
         renderMenus();
         if (window.lucide) lucide.createIcons();
       }
@@ -3618,7 +3622,7 @@
         byId('loginForm').reset();
         closeLogoutModal();
         closeDrawer();
-        document.body.className = 'guest bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900';
+        document.body.className = 'guest bg-slate-50 text-ink selection:bg-rose-200 selection:text-rose-900 overflow-x-hidden w-full max-w-full';
         showView('dashboard');
         if (window.lucide) lucide.createIcons();
       }
@@ -5208,86 +5212,98 @@
         var expired = appData.inventory.filter(function (u) { return u.Status === 'discard' || daysUntil(u.ExpiresAt) < 0; }).length;
         var pending = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).length;
         
-        byId('statMonthlyReceived').textContent = monthlyReceived;
-        byId('statMonthlyDispensed').textContent = monthlyDispensed;
-        byId('kpiAvailable').textContent = available;
-        byId('kpiExpiring').textContent = expiring;
-        byId('kpiExpired').textContent = expired;
-        byId('pendingCount').textContent = pending + ' รายการ';
+        var elSMR = byId('statMonthlyReceived'); if (elSMR) elSMR.textContent = monthlyReceived;
+        var elSMD = byId('statMonthlyDispensed'); if (elSMD) elSMD.textContent = monthlyDispensed;
+        var elKPIAvail = byId('kpiAvailable'); if (elKPIAvail) elKPIAvail.textContent = available;
+        var elKPIExp = byId('kpiExpiring'); if (elKPIExp) elKPIExp.textContent = expiring;
+        var elKPIExpd = byId('kpiExpired'); if (elKPIExpd) elKPIExpd.textContent = expired;
+        var elPendingCount = byId('pendingCount'); if (elPendingCount) elPendingCount.textContent = pending + ' รายการ';
 
-        byId('pendingRequests').innerHTML = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
-          var p = findBy(appData.patients, 'HN', r.HN) || {};
-          var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
-          var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || '';
-          var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || '';
-          var aboBadge = patientAbo 
-            ? ' | หมู่เลือด: <span class="font-bold text-crimson bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">' + esc(patientAbo) + (patientRh ? (' ' + (patientRh === 'Positive' ? 'Rh+' : patientRh === 'Negative' ? 'Rh-' : patientRh)) : '') + '</span>'
-            : '';
+        var elPR = byId('pendingRequests');
+        if (elPR) {
+          elPR.innerHTML = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
+            var p = findBy(appData.patients, 'HN', r.HN) || {};
+            var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
+            var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || '';
+            var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || '';
+            var aboBadge = patientAbo 
+              ? ' | หมู่เลือด: <span class="font-bold text-crimson bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">' + esc(patientAbo) + (patientRh ? (' ' + (patientRh === 'Positive' ? 'Rh+' : patientRh === 'Negative' ? 'Rh-' : patientRh)) : '') + '</span>'
+              : '';
 
-          return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName, patientAbo, patientRh].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
-            '<span class="' + color + ' rounded-full"></span>' +
-            '<div>' +
-              '<p class="font-bold text-slate-900 text-xs">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + '</p>' +
-              '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + aboBadge + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
-              '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
-            '</div>' +
-            '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all">' +
-              esc(r.Priority) +
-            '</button>' +
-          '</article>';
-        }).join('') || '<p class="font-medium text-slate-400 text-center py-6 text-xs">ไม่มีรายการคำขอค้างดำเนินการ</p>';
-
-        byId('bloodSummary').innerHTML = ['O', 'A', 'B', 'AB'].map(function (g) {
-          var c = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
-          return '<div class="rounded-xl border border-rose-100 bg-rose-50/60 p-2.5 text-center">' +
-            '<p class="text-[0.7rem] font-bold text-crimson">หมู่ ' + g + '</p>' +
-            '<p class="text-xl sm:text-2xl font-bold text-rose-900">' + c + '</p>' +
-            '</div>';
-        }).join('');
-
-        var isAllowedManage = currentUser && ['ADMIN', 'MT'].indexOf(currentUser.Role) >= 0;
-        if (isAllowedManage) {
-          byId('manageHeader').classList.remove('hidden');
-        } else {
-          byId('manageHeader').classList.add('hidden');
+            return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName, patientAbo, patientRh].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
+              '<span class="' + color + ' rounded-full"></span>' +
+              '<div>' +
+                '<p class="font-bold text-slate-900 text-xs">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + '</p>' +
+                '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + aboBadge + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
+                '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
+              '</div>' +
+              '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all">' +
+                esc(r.Priority) +
+              '</button>' +
+            '</article>';
+          }).join('') || '<p class="font-medium text-slate-400 text-center py-6 text-xs">ไม่มีรายการคำขอค้างดำเนินการ</p>';
         }
 
-        byId('inventoryTable').innerHTML = appData.inventory.slice().sort(function (a, b) { return new Date(a.ExpiresAt) - new Date(b.ExpiresAt); }).map(function (u) {
-          var daysLeft = daysUntil(u.ExpiresAt);
-          var rowColorClass = '';
-          var expiryBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
-          
-          if (daysLeft < 0) {
-            rowColorClass = 'bg-red-50/80 text-red-950 font-medium';
-            expiryBadgeClass = 'bg-red-100 text-red-800 border-red-300 font-bold';
-          } else if (daysLeft >= 0 && daysLeft <= 10) {
-            rowColorClass = 'bg-amber-50/80 text-amber-950 font-medium';
-            expiryBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
-          }
+        var elBS = byId('bloodSummary');
+        if (elBS) {
+          elBS.innerHTML = ['O', 'A', 'B', 'AB'].map(function (g) {
+            var c = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
+            return '<div class="rounded-xl border border-rose-100 bg-rose-50/60 p-2.5 text-center">' +
+              '<p class="text-[0.7rem] font-bold text-crimson">หมู่ ' + g + '</p>' +
+              '<p class="text-xl sm:text-2xl font-bold text-rose-900">' + c + '</p>' +
+              '</div>';
+          }).join('');
+        }
 
-          var actionCell = '';
+        var isAllowedManage = currentUser && ['ADMIN', 'MT'].indexOf(currentUser.Role) >= 0;
+        var elMH = byId('manageHeader');
+        if (elMH) {
           if (isAllowedManage) {
-            var returnBtn = '';
-            if (u.Status === 'reserved') {
-              returnBtn = '<button class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[0.7rem] font-bold text-amber-700 hover:bg-amber-100 shadow-sm" onclick="cancelReservation(this.dataset.id)" data-id="' + esc(u.DonationID) + '">คืนคลัง</button>';
-            }
-            actionCell = '<td class="p-3">' +
-              '<div class="flex items-center gap-1.5">' +
-              returnBtn +
-              '<button class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[0.7rem] font-bold text-slate-600 hover:bg-slate-100 shadow-sm" onclick="editBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">แก้ไข</button>' +
-              '<button class="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[0.7rem] font-bold text-red-600 hover:bg-red-100 shadow-sm" onclick="deleteBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">ลบ</button>' +
-              '</div>' +
-              '</td>';
+            elMH.classList.remove('hidden');
+          } else {
+            elMH.classList.add('hidden');
           }
-          return '<tr data-search="' + esc([u.DonationID, u.Component, u.ABO, u.Rh, u.Source].join(' ')) + '" class="border-b border-slate-100 ' + rowColorClass + ' hover:bg-slate-50 transition-colors">' +
-            '<td class="p-3 font-bold text-slate-900">' + esc(u.DonationID) + renderAttachmentPreview(u) + '</td>' +
-            '<td class="p-3"><span class="font-semibold">' + esc(u.Component) + '</span><br><span class="text-[0.7rem] text-slate-500">' + esc(u.Volume) + ' ml</span></td>' +
-            '<td class="p-3 font-bold text-crimson">' + esc(u.ABO) + ' ' + esc(u.Rh) + '</td>' +
-            '<td class="p-3">' + esc(u.ExpiresAt) + '<br><span class="inline-block px-1.5 py-0.5 rounded text-[0.65rem] border ' + expiryBadgeClass + '">' + expiryLabel(u.ExpiresAt) + '</span></td>' +
-            '<td class="p-3">' + badge(u.Status, u.DonationID) + '</td>' +
-            actionCell +
-            '</tr>';
-        }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
+        }
+
+        var elInvTable = byId('inventoryTable');
+        if (elInvTable) {
+          elInvTable.innerHTML = appData.inventory.slice().sort(function (a, b) { return new Date(a.ExpiresAt) - new Date(b.ExpiresAt); }).map(function (u) {
+            var daysLeft = daysUntil(u.ExpiresAt);
+            var rowColorClass = '';
+            var expiryBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+            
+            if (daysLeft < 0) {
+              rowColorClass = 'bg-red-50/80 text-red-950 font-medium';
+              expiryBadgeClass = 'bg-red-100 text-red-800 border-red-300 font-bold';
+            } else if (daysLeft >= 0 && daysLeft <= 10) {
+              rowColorClass = 'bg-amber-50/80 text-amber-950 font-medium';
+              expiryBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+            }
+
+            var actionCell = '';
+            if (isAllowedManage) {
+              var returnBtn = '';
+              if (u.Status === 'reserved') {
+                returnBtn = '<button class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[0.7rem] font-bold text-amber-700 hover:bg-amber-100 shadow-sm" onclick="cancelReservation(this.dataset.id)" data-id="' + esc(u.DonationID) + '">คืนคลัง</button>';
+              }
+              actionCell = '<td class="p-3">' +
+                '<div class="flex items-center gap-1.5">' +
+                returnBtn +
+                '<button class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[0.7rem] font-bold text-slate-600 hover:bg-slate-100 shadow-sm" onclick="editBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">แก้ไข</button>' +
+                '<button class="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[0.7rem] font-bold text-red-600 hover:bg-red-100 shadow-sm" onclick="deleteBloodUnit(this.dataset.id)" data-id="' + esc(u.DonationID) + '">ลบ</button>' +
+                '</div>' +
+                '</td>';
+            }
+            return '<tr data-search="' + esc([u.DonationID, u.Component, u.ABO, u.Rh, u.Source].join(' ')) + '" class="border-b border-slate-100 ' + rowColorClass + ' hover:bg-slate-50 transition-colors">' +
+              '<td class="p-3 font-bold text-slate-900">' + esc(u.DonationID) + renderAttachmentPreview(u) + '</td>' +
+              '<td class="p-3"><span class="font-semibold">' + esc(u.Component) + '</span><br><span class="text-[0.7rem] text-slate-500">' + esc(u.Volume) + ' ml</span></td>' +
+              '<td class="p-3 font-bold text-crimson">' + esc(u.ABO) + ' ' + esc(u.Rh) + '</td>' +
+              '<td class="p-3">' + esc(u.ExpiresAt) + '<br><span class="inline-block px-1.5 py-0.5 rounded text-[0.65rem] border ' + expiryBadgeClass + '">' + expiryLabel(u.ExpiresAt) + '</span></td>' +
+              '<td class="p-3">' + badge(u.Status, u.DonationID) + '</td>' +
+              actionCell +
+              '</tr>';
+          }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
+        }
         if (typeof updateDashboardExecutiveOverview === 'function') updateDashboardExecutiveOverview();
       }
 
