@@ -1728,6 +1728,224 @@
           </div>
         </section>
 
+        <!-- INCIDENT REPORTING PAGE -->
+        <section id="incidents_page" class="view">
+          <div class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-crimson border border-rose-200 mb-1">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Transfusion Safety & Incident System
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                รายงานอุบัติการณ์ งานธนาคารเลือด โรงพยาบาลเขาฉกรรจ์
+              </h2>
+              <p class="text-xs text-slate-500">บันทึกอุบัติการณ์ความปลอดภัย 4 หมวดหลัก ข้อมูลจะเชื่อมโยงและอัปเดตเข้าสู่หน้าสถิติ & แผนภูมิ (Dashboard) แบบ Real-time ทันที</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="showView('dashboard')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-colors cursor-pointer">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-teal-600"></i> ไปที่หน้าสถิติ (Dashboard)
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 KPI Cards for the 4 Incident Categories -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <!-- 1. ผิดคน ผิดหมู่ ผิดชนิด -->
+            <div class="rounded-2xl border border-rose-200 bg-gradient-to-br from-white to-rose-50/40 p-4 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-bold text-rose-800 uppercase tracking-wide">1. ผิดคน ผิดหมู่ ผิดชนิด</span>
+                <span class="p-1.5 rounded-lg bg-rose-100 text-crimson"><i data-lucide="shield-x" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="pageKpiWrongTransfusion" class="text-2xl sm:text-3xl font-extrabold text-crimson">0</span>
+                <span class="text-xs text-slate-500 font-medium">ครั้ง</span>
+              </div>
+              <p class="text-[0.68rem] text-rose-700 mt-1 font-semibold flex items-center gap-1">
+                <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> เป้าหมายความปลอดภัย: 0 ครั้ง (Sentinel Event)
+              </p>
+            </div>
+
+            <!-- 2. อาการไม่พึงประสงค์จากการรับเลือด -->
+            <div class="rounded-2xl border border-blue-200 bg-gradient-to-br from-white to-blue-50/40 p-4 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-bold text-blue-800 uppercase tracking-wide">2. อาการไม่พึงประสงค์ (Reaction)</span>
+                <span class="p-1.5 rounded-lg bg-blue-100 text-blue-700"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="pageKpiReactions" class="text-2xl sm:text-3xl font-extrabold text-blue-700">0</span>
+                <span class="text-xs text-slate-500 font-medium">ครั้ง</span>
+              </div>
+              <p class="text-[0.68rem] text-blue-600 mt-1 font-medium">FNHTR, Allergic, Hemolytic reaction</p>
+            </div>
+
+            <!-- 3. เลือดหมดอายุโดยไม่ได้ใช้ -->
+            <div class="rounded-2xl border border-amber-200 bg-gradient-to-br from-white to-amber-50/40 p-4 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-bold text-amber-800 uppercase tracking-wide">3. เลือดหมดอายุไม่ได้ใช้ (Expired)</span>
+                <span class="p-1.5 rounded-lg bg-amber-100 text-amber-700"><i data-lucide="clock-alert" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="pageKpiWastage" class="text-2xl sm:text-3xl font-extrabold text-amber-700">0</span>
+                <span class="text-xs text-slate-500 font-medium">ยูนิต</span>
+              </div>
+              <p class="text-[0.68rem] text-amber-700 mt-1 font-medium">สูญเสียจากการหมดอายุ (Blood Wastage)</p>
+            </div>
+
+            <!-- 4. สิ่งส่งตรวจไม่เหมาะสม -->
+            <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm relative overflow-hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-bold text-slate-700 uppercase tracking-wide">4. สิ่งส่งตรวจไม่เหมาะสม</span>
+                <span class="p-1.5 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="test-tube" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="pageKpiNearMiss" class="text-2xl sm:text-3xl font-extrabold text-slate-800">0</span>
+                <span class="text-xs text-slate-500 font-medium">ครั้ง</span>
+              </div>
+              <p class="text-[0.68rem] text-slate-500 mt-1 font-medium">Clot, Hemolysis, QNS, ป้ายชื่อไม่ชัดเจน</p>
+            </div>
+          </div>
+
+          <!-- Main Grid: Form on Left/Top + Info / History on Right/Bottom -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Form Card -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="p-1.5 rounded-lg bg-rose-50 text-crimson"><i data-lucide="file-plus-2" class="w-4 h-4"></i></span>
+                  บันทึกรายงานอุบัติการณ์ใหม่
+                </h3>
+                <span class="text-[0.7rem] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Auto-Sync Dashboard</span>
+              </div>
+
+              <form id="pageIncidentForm" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">วันที่และเวลาที่เกิดเหตุ / พบเหตุ <span class="text-rose-500">*</span></label>
+                  <input type="datetime-local" id="pageIncidentInputDate" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson focus:ring-1 focus:ring-crimson outline-hidden transition-all bg-slate-50/50">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">หมวดหมู่อุบัติการณ์หลัก <span class="text-rose-500">*</span></label>
+                  <select id="pageIncidentInputCategory" onchange="handlePageIncidentCategoryChange(this.value)" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson focus:ring-1 focus:ring-crimson outline-hidden transition-all bg-white font-medium">
+                    <option value="ผิดคน/ผิดหมู่/ผิดชนิด">1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด (Sentinel Event)</option>
+                    <option value="อาการไม่พึงประสงค์จากการรับเลือด">2. อาการไม่พึงประสงค์จากการรับเลือด (Transfusion Reaction)</option>
+                    <option value="เลือดหมดอายุโดยไม่ได้ใช้">3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood Wastage)</option>
+                    <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม">4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม (Specimen Issue / Near Miss)</option>
+                    <option value="อุบัติการณ์อื่นๆ ในงานธนาคารเลือด">5. อุบัติการณ์อื่นๆ ในงานธนาคารเลือด</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">รายละเอียด / ประเภทเหตุการณ์ <span class="text-rose-500">*</span></label>
+                  <input type="text" id="pageIncidentInputType" list="incidentCommonTypeList" required placeholder="เช่น FNHTR ไข้หนาวสั่น, ตัวอย่างเลือด Clot หรือระบุเหตุการณ์" class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson focus:ring-1 focus:ring-crimson outline-hidden transition-all">
+                  <datalist id="incidentCommonTypeList">
+                    <option value="ให้เลือดผิดคน (Wrong Patient)">
+                    <option value="ให้เลือดผิดหมู่/ผิดชนิด (ABO/Rh Incompatible)">
+                    <option value="อาการไม่พึงประสงค์ FNHTR (ไข้หนาวสั่น)">
+                    <option value="อาการแพ้ Allergic Reaction (ผื่นคัน, ลมพิษ)">
+                    <option value="Acute Hemolytic Reaction (AHTR)">
+                    <option value="สงสัย TRALI / TACO">
+                    <option value="เลือดหมดอายุโดยไม่ได้ใช้ (PRC/FFP/PC Expired)">
+                    <option value="สิ่งส่งตรวจ Clot ไม่สามารถตรวจได้">
+                    <option value="สิ่งส่งตรวจ Hemolyze ปริมาณมาก">
+                    <option value="สิ่งส่งตรวจปริมาณไม่เพียงพอ (QNS)">
+                    <option value="ป้ายระบุตัวตนบนหลอดเลือดไม่ตรงหรือไม่ชัดเจน">
+                  </datalist>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">หน่วยงาน / หอผู้ป่วย</label>
+                    <select id="pageIncidentInputDept" class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson outline-hidden bg-white">
+                      <option value="IPD (หอผู้ป่วยใน)">IPD (หอผู้ป่วยใน)</option>
+                      <option value="OPD (ผู้ป่วยนอก)">OPD (ผู้ป่วยนอก)</option>
+                      <option value="ER (ห้องฉุกเฉิน)">ER (ห้องฉุกเฉิน)</option>
+                      <option value="LR (ห้องคลอด)">LR (ห้องคลอด)</option>
+                      <option value="LAB (ชันสูตร/ธนาคารเลือด)">LAB (ชันสูตร/ธนาคารเลือด)</option>
+                      <option value="IC (งานควบคุมการติดเชื้อ)">IC</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">ระดับความรุนแรง</label>
+                    <select id="pageIncidentInputSev" class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson outline-hidden bg-white">
+                      <option value="Level A (Near Miss ยังไม่เกิด)">Level A (ยังไม่เกิด/ตรวจพบก่อน)</option>
+                      <option value="Level B (เกิดแต่ไม่ถึงตัวผู้ป่วย)">Level B (ไม่ถึงตัวผู้ป่วย)</option>
+                      <option value="Level C (ถึงตัวแต่ไม่เกิดอันตราย)">Level C (ถึงตัวแต่ไม่อันตราย)</option>
+                      <option value="Level D (ต้องเฝ้าระวัง)">Level D (ต้องเฝ้าระวัง)</option>
+                      <option value="Level E (อันตรายชั่วคราว)">Level E (อันตรายชั่วคราว)</option>
+                      <option value="Level F (ต้องรักษาตัวนานขึ้น)">Level F (รักษาตัวนานขึ้น)</option>
+                      <option value="Level G (พิการถาวร)">Level G (พิการถาวร)</option>
+                      <option value="Level H (ต้องช่วยกู้ชีพ)">Level H (ต้องช่วยกู้ชีพ)</option>
+                      <option value="Level I (เสียชีวิต)">Level I (เสียชีวิต/Sentinel)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">การแก้ไขเบื้องต้น / มาตรการป้องกัน</label>
+                  <textarea id="pageIncidentInputAct" rows="3" placeholder="ระบุการปฏิบัติและการแก้ไข เช่น หยุดให้เลือดทันที, ส่งคืนธนาคารเลือด, เจาะตัวอย่างใหม่..." class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson outline-hidden transition-all"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">ผู้รายงาน / ตำแหน่ง</label>
+                  <input type="text" id="pageIncidentInputReporter" placeholder="ชื่อ-นามสกุล ผู้รายงาน" class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-crimson outline-hidden transition-all">
+                </div>
+
+                <div class="pt-2 flex items-center gap-2">
+                  <button type="submit" class="flex-1 rounded-xl bg-crimson hover:bg-crimsonlight py-2.5 px-4 text-xs font-bold text-white shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i data-lucide="save" class="w-4 h-4"></i> บันทึกรายงานอุบัติการณ์
+                  </button>
+                  <button type="reset" class="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 py-2.5 px-3 text-xs font-bold text-slate-600 transition-all cursor-pointer">
+                    รีเซ็ต
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Table Card / Log History -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <span class="p-1.5 rounded-lg bg-teal-50 text-teal-700"><i data-lucide="history" class="w-4 h-4"></i></span>
+                      ประวัติการรายงานอุบัติการณ์
+                    </h3>
+                    <p class="text-[0.68rem] text-slate-500">ข้อมูลทั้งหมดจะสรุปแสดงในหัวข้อที่ 5 ของหน้า Dashboard แบบ Real-time</p>
+                  </div>
+                  <span id="pageIncidentLogCountBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">0 รายการ</span>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-100">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                      <tr>
+                        <th class="py-2.5 px-3 font-bold whitespace-nowrap">วันที่</th>
+                        <th class="py-2.5 px-3 font-bold whitespace-nowrap">เหตุการณ์ / หมวดหมู่</th>
+                        <th class="py-2.5 px-3 font-bold whitespace-nowrap">แผนก</th>
+                        <th class="py-2.5 px-3 font-bold whitespace-nowrap">ความรุนแรง</th>
+                        <th class="py-2.5 px-3 font-bold">การจัดการ</th>
+                        <th class="py-2.5 px-3 font-bold whitespace-nowrap">ผู้รายงาน</th>
+                        <th class="py-2.5 px-3 font-bold text-center whitespace-nowrap">สถานะ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pageIncidentLogTableBody" class="divide-y divide-slate-100">
+                      <!-- Populated by renderIncidentLogs() -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Info Box at the bottom -->
+              <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-xs text-slate-600">
+                <i data-lucide="info" class="w-4 h-4 text-teal-600 shrink-0 mt-0.5"></i>
+                <div>
+                  <span class="font-bold text-slate-800">ระบบเชื่อมโยงข้อมูลอัตโนมัติ (Live Interconnection):</span>
+                  เมื่อกรอกข้อมูลอุบัติการณ์ที่หน้านี้ ยอดสรุปทั้ง 4 หมวด, แผนภูมิแท่ง (Bar Chart) และ แผนภูมิสัดส่วน (Doughnut Chart) ในหน้าสถิติเดิม (Dashboard) จะปรับปรุงตัวเลขอัตโนมัติทันทีโดยไม่ต้องรีเฟรชหน้าเว็บ
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 5. BLOOD GROUPING -->
         <section id="grouping" class="view">
           <div class="mb-4 border-b border-slate-200 pb-2">
@@ -3616,6 +3834,7 @@
         { id: 'dispense', label: 'จ่ายเลือด (3-Step)', icon: 'truck', roles: ['ADMIN', 'MT'], mobile: true },
         { id: 'attachments', label: 'เอกสารแนบ', icon: 'paperclip', roles: ['ADMIN', 'MT'] },
         { id: 'ebook_records', label: 'E-Book แมตช์ & รับ-จ่าย', icon: 'book-open', roles: ['ADMIN', 'MT'], mobile: true },
+        { id: 'incidents_page', label: 'รายงานอุบัติการณ์', icon: 'shield-alert', roles: ['ADMIN', 'MT', 'DOCTOR', 'NURSE', 'USER'], mobile: true },
         { id: 'users', label: 'จัดการผู้ใช้งาน', icon: 'users', roles: ['ADMIN'], admin: true },
         { id: 'audit', label: 'Audit Trail', icon: 'history', roles: ['ADMIN'], admin: true },
       ];
@@ -3715,6 +3934,14 @@
         // Incident Form Event
         var incForm = byId('incidentForm');
         if (incForm) incForm.addEventListener('submit', submitIncidentReport);
+        var pageIncForm = byId('pageIncidentForm');
+        if (pageIncForm) pageIncForm.addEventListener('submit', submitPageIncidentReport);
+
+        var pageIncDate = byId('pageIncidentInputDate');
+        if (pageIncDate && !pageIncDate.value) {
+          var now = new Date();
+          pageIncDate.value = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        }
 
         // Auto-calculate Expiry date on collectedAt or component change
         var form = byId('bloodForm');
@@ -6213,6 +6440,8 @@
           renderCommunityNetwork();
         } else if (id === 'dashboard') {
           if (typeof updateDashboardExecutiveOverview === 'function') updateDashboardExecutiveOverview();
+          if (typeof renderIncidentLogs === 'function') renderIncidentLogs();
+        } else if (id === 'incidents_page') {
           if (typeof renderIncidentLogs === 'function') renderIncidentLogs();
         }
         if (typeof updateHeaderStockAlertBadge === 'function') {

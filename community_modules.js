@@ -1674,6 +1674,41 @@ function renderIncidentLogs() {
   var elNM = byId('execIncidentNearMissCount');
   if (elNM) elNM.textContent = inappropriateSpecimenCount;
 
+  // Sync to Dedicated Incidents Page KPI cards
+  var pkpiWrong = byId('pageKpiWrongTransfusion');
+  if (pkpiWrong) pkpiWrong.textContent = wrongTransfusionCount;
+
+  var pkpiRC = byId('pageKpiReactions');
+  if (pkpiRC) pkpiRC.textContent = reactionsCount;
+
+  var pkpiWastage = byId('pageKpiWastage');
+  if (pkpiWastage) pkpiWastage.textContent = expiredWastageCount;
+
+  var pkpiNM = byId('pageKpiNearMiss');
+  if (pkpiNM) pkpiNM.textContent = inappropriateSpecimenCount;
+
+  // Sync to Dedicated Incidents Page Table
+  var pageTbody = byId('pageIncidentLogTableBody');
+  if (pageTbody) {
+    pageTbody.innerHTML = list.map(function(item) {
+      var badgeColor = (item.severity && item.severity.includes('Level A')) ? 'bg-slate-100 text-slate-700' :
+                       (item.severity && item.severity.includes('Level B')) ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                       (item.severity && item.severity.includes('Level C')) ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                       'bg-rose-50 text-crimson border border-rose-200';
+      return '<tr class="hover:bg-slate-50 transition-colors">' +
+        '<td class="py-2.5 px-3 font-medium text-slate-600 whitespace-nowrap">' + esc(item.date) + '</td>' +
+        '<td class="py-2.5 px-3 font-bold text-slate-900">' + esc(item.type) + '</td>' +
+        '<td class="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">' + esc(item.department) + '</td>' +
+        '<td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-xs font-bold ' + badgeColor + '">' + esc(item.severity) + '</span></td>' +
+        '<td class="py-2.5 px-3 text-slate-600" title="' + jsAttr(item.action) + '">' + esc(item.action) + '</td>' +
+        '<td class="py-2.5 px-3 text-slate-500 whitespace-nowrap text-xs">' + esc(item.reporter || '-') + '</td>' +
+        '<td class="py-2.5 px-3 text-center whitespace-nowrap"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">✓ ' + esc(item.status) + '</span></td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="7" class="text-center py-6 text-slate-400">ยังไม่มีรายงานอุบัติการณ์</td></tr>';
+  }
+  var pageCountBadge = byId('pageIncidentLogCountBadge');
+  if (pageCountBadge) pageCountBadge.textContent = list.length + ' รายการ';
+
   // Render chart
   if (typeof renderIncidentChart === 'function') {
     renderIncidentChart();
@@ -1916,6 +1951,69 @@ function submitIncidentReport(e) {
   alert('บันทึกรายงานอุบัติการณ์เรียบร้อยแล้ว');
 }
 
+function handlePageIncidentCategoryChange(cat) {
+  var input = byId('pageIncidentInputType');
+  if (!input) return;
+  if (cat === 'ผิดคน/ผิดหมู่/ผิดชนิด') {
+    input.placeholder = 'เช่น ให้เลือดผิดคน / ผิดหมู่ ABO / ผิดชนิดยูนิต';
+  } else if (cat === 'อาการไม่พึงประสงค์จากการรับเลือด') {
+    input.placeholder = 'เช่น FNHTR ไข้หนาวสั่น / ผื่นคัน ลมพิษ / แน่นหน้าอก';
+  } else if (cat === 'เลือดหมดอายุโดยไม่ได้ใช้') {
+    input.placeholder = 'เช่น เลือดหมดอายุไม่ได้ใช้ (เช่น PRC หมดอายุ 1 ยูนิต)';
+  } else if (cat === 'สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม') {
+    input.placeholder = 'เช่น สิ่งส่งตรวจ Clot / ป้ายชื่อผิดหรือไม่ชัดเจน / QNS';
+  } else {
+    input.placeholder = 'ระบุรายละเอียดอุบัติการณ์';
+  }
+}
+
+function submitPageIncidentReport(e) {
+  if (e) e.preventDefault();
+  var dateInput = byId('pageIncidentInputDate');
+  var dateVal = (dateInput && dateInput.value) ? dateInput.value.replace('T', ' ') : new Date().toISOString().split('T')[0];
+  var catVal = (byId('pageIncidentInputCategory') && byId('pageIncidentInputCategory').value) || '';
+  var typeVal = (byId('pageIncidentInputType') && byId('pageIncidentInputType').value) || 'อุบัติการณ์ทั่วไป';
+  var deptVal = (byId('pageIncidentInputDept') && byId('pageIncidentInputDept').value) || 'IPD';
+  var sevVal = (byId('pageIncidentInputSev') && byId('pageIncidentInputSev').value) || 'Level A';
+  var actVal = (byId('pageIncidentInputAct') && byId('pageIncidentInputAct').value) || 'ปฏิบัติตามแนวทางความปลอดภัยงานธนาคารเลือด';
+  var repVal = (byId('pageIncidentInputReporter') && byId('pageIncidentInputReporter').value) || (typeof currentUser !== 'undefined' && currentUser ? currentUser.FullName : 'เจ้าหน้าที่');
+
+  var fullType = typeVal;
+  if (catVal && !typeVal.includes(catVal)) {
+    fullType = catVal + ' - ' + typeVal;
+  }
+
+  var newInc = {
+    id: 'INC-' + Date.now().toString().slice(-6),
+    date: dateVal,
+    category: catVal,
+    type: fullType,
+    department: deptVal,
+    severity: sevVal,
+    action: actVal,
+    status: 'ทบทวนแล้ว',
+    reporter: repVal
+  };
+
+  var list = getIncidentRecords();
+  list.unshift(newInc);
+  saveIncidentRecords(list);
+  renderIncidentLogs();
+
+  var form = byId('pageIncidentForm');
+  if (form) {
+    form.reset();
+    var dInput = byId('pageIncidentInputDate');
+    if (dInput) {
+      var now = new Date();
+      var iso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+      dInput.value = iso;
+    }
+  }
+
+  alert('✅ บันทึกรายงานอุบัติการณ์สำเร็จ!\nข้อมูลได้เชื่อมโยงเข้าสู่หน้าสถิติ (Dashboard) และแผนภูมิเรียบร้อยแล้ว');
+}
+
 window.getIncidentRecords = getIncidentRecords;
 window.saveIncidentRecords = saveIncidentRecords;
 window.renderIncidentLogs = renderIncidentLogs;
@@ -1924,4 +2022,6 @@ window.setIncidentDisplayMode = setIncidentDisplayMode;
 window.openIncidentReportModal = openIncidentReportModal;
 window.closeIncidentReportModal = closeIncidentReportModal;
 window.submitIncidentReport = submitIncidentReport;
+window.handlePageIncidentCategoryChange = handlePageIncidentCategoryChange;
+window.submitPageIncidentReport = submitPageIncidentReport;
 
