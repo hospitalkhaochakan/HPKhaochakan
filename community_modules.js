@@ -1473,6 +1473,42 @@ function updateDashboardExecutiveOverview() {
     if (elStockDeficitO) elStockDeficitO.textContent = deficitO;
     if (elStockExpiring) elStockExpiring.textContent = totalExpiring;
 
+    // Update the 4 blood group cards in Topic 1 (O+, A+, B+, AB+)
+    var bgMeta = {
+      'O+': { unitEl: 'execStockO_units', badgeEl: 'execStockO_badge', noteEl: 'execStockO_note', min: 2 },
+      'A+': { unitEl: 'execStockA_units', badgeEl: 'execStockA_badge', noteEl: 'execStockA_note', min: 0 },
+      'B+': { unitEl: 'execStockB_units', badgeEl: 'execStockB_badge', noteEl: 'execStockB_note', min: 0 },
+      'AB+': { unitEl: 'execStockAB_units', badgeEl: 'execStockAB_badge', noteEl: 'execStockAB_note', min: 0 }
+    };
+
+    ['O+', 'A+', 'B+', 'AB+'].forEach(function(bg) {
+      var item = stockSummary[bg] || { available_units: 0, status: 'normal', deficit: 0 };
+      var meta = bgMeta[bg];
+      var uEl = byId(meta.unitEl);
+      var bEl = byId(meta.badgeEl);
+      var nEl = byId(meta.noteEl);
+      if (uEl) uEl.textContent = item.available_units;
+      if (bEl) {
+        if (item.status === 'critical') {
+          bEl.className = 'px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-rose-100 text-crimson border border-rose-300';
+          bEl.textContent = 'ขาด ' + (item.deficit || 1) + ' U';
+        } else if (item.status === 'warning') {
+          bEl.className = 'px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+          bEl.textContent = 'เฝ้าระวัง';
+        } else {
+          bEl.className = 'px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+          bEl.textContent = 'ปกติ';
+        }
+      }
+      if (nEl) {
+        if (meta.min > 0) {
+          nEl.textContent = 'เกณฑ์ขั้นต่ำ ' + meta.min + ' U';
+        } else {
+          nEl.textContent = 'ไม่สต็อกประจำ (' + item.available_units + ' U)';
+        }
+      }
+    });
+
     // 2. ทะเบียนผู้บริจาคโลหิต
     var donors = getDonorsList();
     var totalDonors = 2458 + donors.length - (window.INITIAL_DONORS ? window.INITIAL_DONORS.length : 0);
