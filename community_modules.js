@@ -1541,3 +1541,154 @@ function updateDashboardExecutiveOverview() {
   }
 }
 window.updateDashboardExecutiveOverview = updateDashboardExecutiveOverview;
+
+// =========================================================================
+// 5. อุบัติการณ์ของงานธนาคารเลือด โรงพยาบาลเขาฉกรรจ์ (Transfusion Incidents)
+// =========================================================================
+
+var DEFAULT_INCIDENT_RECORDS = [
+  {
+    id: 'INC-2569-001',
+    date: '2026-10-02',
+    type: 'สิ่งส่งตรวจมี Clot ในหลอดเลือด (Clotted Specimen)',
+    department: 'IPD (หอผู้ป่วยใน)',
+    severity: 'Level B (ไม่ถึงตัวผู้ป่วย)',
+    action: 'แจ้งพยาบาลสั่งเจาะเก็บตัวอย่างใหม่ทันที และบันทึกประวัติการปฏิเสธสิ่งส่งตรวจ',
+    status: 'ทบทวนแล้ว',
+    reporter: 'ทนพ. สมชาย'
+  },
+  {
+    id: 'INC-2569-002',
+    date: '2026-09-28',
+    type: 'ปฏิกิริยาไข้ไม่เกี่ยวกับเม็ดเลือดแดงแตก (FNHTR)',
+    department: 'ER (ฉุกเฉิน)',
+    severity: 'Level C (อาการเล็กน้อย)',
+    action: 'ชะลอการให้เลือด ตรวจซ้ำ Clerical check + DAT ผลลบ ให้ยาลดไข้ อาการดีขึ้น',
+    status: 'ทบทวนแล้ว',
+    reporter: 'พว. วันเพ็ญ'
+  },
+  {
+    id: 'INC-2569-003',
+    date: '2026-09-15',
+    type: 'ป้ายชื่อระบุตัวตนบนหลอดเลือดเลือนราง (Unclear Label)',
+    department: 'OPD (ผู้ป่วยนอก)',
+    severity: 'Level A (Near Miss ดักจับได้ทัน)',
+    action: 'ปฏิเสธสิ่งส่งตรวจ ให้เจ้าหน้าที่นำส่งพิมพ์สติกเกอร์บาร์โค้ดใหม่และยืนยันตัวตนคนไข้',
+    status: 'ทบทวนแล้ว',
+    reporter: 'ทนพ. สมชาย'
+  }
+];
+
+function getIncidentRecords() {
+  try {
+    var saved = localStorage.getItem('bb_incidents_data');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return [...DEFAULT_INCIDENT_RECORDS];
+}
+
+function saveIncidentRecords(list) {
+  try {
+    localStorage.setItem('bb_incidents_data', JSON.stringify(list));
+  } catch(e) {}
+}
+
+function renderIncidentLogs() {
+  var list = getIncidentRecords();
+  var tbody = byId('incidentLogTableBody');
+  if (tbody) {
+    tbody.innerHTML = list.map(function(item) {
+      var badgeColor = item.severity.includes('Level A') ? 'bg-slate-100 text-slate-700' :
+                       item.severity.includes('Level B') ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                       item.severity.includes('Level C') ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                       'bg-rose-50 text-crimson border border-rose-200';
+      return '<tr class="hover:bg-slate-50 transition-colors">' +
+        '<td class="py-1.5 px-2 font-medium text-slate-600 whitespace-nowrap">' + esc(item.date) + '</td>' +
+        '<td class="py-1.5 px-2 font-bold text-slate-900">' + esc(item.type) + '</td>' +
+        '<td class="py-1.5 px-2 font-semibold text-slate-700">' + esc(item.department) + '</td>' +
+        '<td class="py-1.5 px-2"><span class="px-1.5 py-0.5 rounded text-[0.62rem] font-bold ' + badgeColor + '">' + esc(item.severity) + '</span></td>' +
+        '<td class="py-1.5 px-2 text-slate-600 max-w-xs truncate" title="' + jsAttr(item.action) + '">' + esc(item.action) + '</td>' +
+        '<td class="py-1.5 px-2 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">✓ ' + esc(item.status) + '</span></td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400">ยังไม่มีรายงานอุบัติการณ์</td></tr>';
+  }
+
+  var countBadge = byId('incidentLogCountBadge');
+  if (countBadge) countBadge.textContent = list.length + ' รายการ';
+
+  var nearMissCount = list.filter(function(x) { 
+    return (x.severity && x.severity.includes('Level A')) || (x.severity && x.severity.includes('Level B')) || (x.type && x.type.includes('Clot')) || (x.type && x.type.includes('ป้าย')); 
+  }).length;
+  
+  var reactionsCount = list.filter(function(x) { 
+    return (x.type && (x.type.includes('FNHTR') || x.type.includes('Reaction') || x.type.includes('ไม่พึงประสงค์') || x.type.includes('แพ้'))); 
+  }).length;
+
+  var elNM = byId('execIncidentNearMissCount');
+  if (elNM) elNM.textContent = nearMissCount;
+
+  var elRC = byId('execIncidentReactionsCount');
+  if (elRC) elRC.textContent = reactionsCount;
+
+  var elWastage = byId('execIncidentWastageCount');
+  if (elWastage) elWastage.textContent = '0.0%';
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function openIncidentReportModal() {
+  var m = byId('incidentModal');
+  if (m) {
+    m.classList.remove('hidden');
+    m.classList.add('grid');
+    var dInput = byId('incidentInputDate');
+    if (dInput && !dInput.value) dInput.value = new Date().toISOString().split('T')[0];
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function closeIncidentReportModal() {
+  var m = byId('incidentModal');
+  if (m) {
+    m.classList.add('hidden');
+    m.classList.remove('grid');
+  }
+}
+
+function submitIncidentReport(e) {
+  if (e) e.preventDefault();
+  var dateVal = (byId('incidentInputDate') && byId('incidentInputDate').value) || new Date().toISOString().split('T')[0];
+  var typeVal = (byId('incidentInputType') && byId('incidentInputType').value) || 'อุบัติการณ์ทั่วไป';
+  var deptVal = (byId('incidentInputDept') && byId('incidentInputDept').value) || 'IPD';
+  var sevVal = (byId('incidentInputSev') && byId('incidentInputSev').value) || 'Level A';
+  var actVal = (byId('incidentInputAct') && byId('incidentInputAct').value) || 'ดำเนินการตามแนวทางความปลอดภัย';
+  var repVal = (byId('incidentInputReporter') && byId('incidentInputReporter').value) || (typeof currentUser !== 'undefined' && currentUser ? currentUser.FullName : 'เจ้าหน้าที่');
+
+  var newInc = {
+    id: 'INC-' + Date.now().toString().slice(-6),
+    date: dateVal,
+    type: typeVal,
+    department: deptVal,
+    severity: sevVal,
+    action: actVal,
+    status: 'ทบทวนแล้ว',
+    reporter: repVal
+  };
+
+  var list = getIncidentRecords();
+  list.unshift(newInc);
+  saveIncidentRecords(list);
+  renderIncidentLogs();
+  closeIncidentReportModal();
+  var form = byId('incidentForm');
+  if (form) form.reset();
+  alert('บันทึกรายงานอุบัติการณ์เรียบร้อยแล้ว');
+}
+
+window.getIncidentRecords = getIncidentRecords;
+window.saveIncidentRecords = saveIncidentRecords;
+window.renderIncidentLogs = renderIncidentLogs;
+window.openIncidentReportModal = openIncidentReportModal;
+window.closeIncidentReportModal = closeIncidentReportModal;
+window.submitIncidentReport = submitIncidentReport;
+
