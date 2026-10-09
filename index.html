@@ -6337,7 +6337,12 @@
           if (m.isGroup) {
             if (!hasAddedCommunityDivider) {
               hasAddedCommunityDivider = true;
-              dHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">คลังเลือดและชุมชน</div>';
+              dHtml += '<div class="mt-3.5 mb-1.5 border-t border-slate-200/90 pt-2.5 px-2">' +
+                '<div class="flex items-center gap-1.5 bg-rose-50/80 border border-rose-200 rounded-lg px-2 py-1 text-crimson shadow-2xs">' +
+                  '<span class="w-1.5 h-3.5 rounded-full bg-crimson shrink-0"></span>' +
+                  '<span class="text-[0.72rem] font-black tracking-wide text-rose-950 uppercase">คลังเลือดและชุมชน</span>' +
+                '</div>' +
+              '</div>';
             }
             var subAllowed = (m.subItems || []).filter(function (s) { return !s.roles || s.roles.indexOf(role) >= 0; });
             var isOpen = !!accordionState[m.id];
@@ -6360,7 +6365,12 @@
           } else {
             if (!hasAddedSectionDivider && m.id === 'patients') {
               hasAddedSectionDivider = true;
-              dHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-2 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">งานบริการธนาคารเลือด</div>';
+              dHtml += '<div class="mt-3.5 mb-1.5 border-t border-slate-200/90 pt-2.5 px-2">' +
+                '<div class="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200 rounded-lg px-2 py-1 text-blue-700 shadow-2xs">' +
+                  '<span class="w-1.5 h-3.5 rounded-full bg-blue-600 shrink-0"></span>' +
+                  '<span class="text-[0.72rem] font-black tracking-wide text-blue-950 uppercase">งานบริการธนาคารเลือด</span>' +
+                '</div>' +
+              '</div>';
             }
             dHtml += '<button class="nav flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-semibold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.8rem] truncate" data-view="' + m.id + '">' +
               '<i data-lucide="' + m.icon + '" class="w-4 h-4 shrink-0 text-slate-500"></i> <span>' + m.label + '</span>' +
@@ -6381,7 +6391,12 @@
           if (m.isGroup) {
             if (!hasAddedDrawerCommDivider) {
               hasAddedDrawerCommDivider = true;
-              mDrawerHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-3 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">คลังเลือดและชุมชน</div>';
+              mDrawerHtml += '<div class="mt-3.5 mb-1.5 border-t border-slate-200/90 pt-2.5 px-3">' +
+                '<div class="flex items-center gap-1.5 bg-rose-50/80 border border-rose-200 rounded-lg px-2.5 py-1 text-crimson shadow-2xs">' +
+                  '<span class="w-1.5 h-3.5 rounded-full bg-crimson shrink-0"></span>' +
+                  '<span class="text-xs font-black tracking-wide text-rose-950 uppercase">คลังเลือดและชุมชน</span>' +
+                '</div>' +
+              '</div>';
             }
             var subAllowed = (m.subItems || []).filter(function (s) { return !s.roles || s.roles.indexOf(role) >= 0; });
             var isOpen = !!accordionState[m.id];
@@ -6402,7 +6417,12 @@
             '</div>';
           } else {
             if (m.id === 'patients') {
-              mDrawerHtml += '<div class="my-2 border-t border-slate-100 pt-2 px-3 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">งานบริการธนาคารเลือด</div>';
+              mDrawerHtml += '<div class="mt-3.5 mb-1.5 border-t border-slate-200/90 pt-2.5 px-3">' +
+                '<div class="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200 rounded-lg px-2.5 py-1 text-blue-700 shadow-2xs">' +
+                  '<span class="w-1.5 h-3.5 rounded-full bg-blue-600 shrink-0"></span>' +
+                  '<span class="text-xs font-black tracking-wide text-blue-950 uppercase">งานบริการธนาคารเลือด</span>' +
+                '</div>' +
+              '</div>';
             }
             mDrawerHtml += '<button class="drawer-nav flex items-center gap-3 rounded-xl px-4 py-2.5 text-left font-bold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-xs" data-view="' + m.id + '">' +
               '<i data-lucide="' + m.icon + '" class="w-4 h-4 text-crimson"></i> ' + m.label +
