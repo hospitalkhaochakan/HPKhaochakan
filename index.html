@@ -1605,18 +1605,18 @@
               </select>
             </label>
             <label class="field">
-              <span>หมู่เลือดผู้ป่วย (ABO) *</span>
+              <span>หมู่เลือดที่ต้องการสั่งจอง (ABO) *</span>
               <select name="abo" required class="font-bold text-crimson">
                 <option value="O">หมู่ O</option>
                 <option value="A">หมู่ A</option>
                 <option value="B">หมู่ B</option>
                 <option value="AB">หมู่ AB</option>
-                <option value="Unknown">ไม่ทราบ / รอผลตรวจ</option>
+                <option value="Unknown">ไม่ทราบ / ส่งตัวอย่างให้แล็บตรวจ</option>
               </select>
             </label>
             <label class="field">
               <span>หมู่เลือด Rh(D) *</span>
-              <select name="rh" required>
+              <select name="rh" required class="font-bold">
                 <option value="Positive">Positive (+)</option>
                 <option value="Negative">Negative (-)</option>
               </select>
@@ -1665,6 +1665,67 @@
             </div>
             <p id="patientMessage" class="font-bold sm:col-span-2 xl:col-span-4 text-xs"></p>
           </form>
+
+          <!-- Requests & Inventory Table (รวมหน้านี้เพื่อให้พยาบาลคีย์ขอเลือด และขึ้นโชว์ที่ห้องแล็บทันที) -->
+          <div class="mt-8 pt-6 border-t border-slate-200">
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 class="font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
+                  <i data-lucide="activity" class="w-5 h-5 text-crimson"></i> คิวคำสั่งจองเลือดส่งห้องแล็บ & สถานะคลังเลือด (Live Lab Queue & Stock)
+                </h3>
+                <p class="text-xs text-slate-500">คำสั่งจองเลือดที่พยาบาลคีย์จะส่งตรงมาแสดงในคิวของห้องปฏิบัติการทันที พร้อมตรวจสอบสถานะคลังเลือดคงเหลือ</p>
+              </div>
+              <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> เชื่อมโยงระบบห้องแล็บแบบ Real-time
+              </span>
+            </div>
+
+            <!-- Requests & Inventory Table Grid -->
+            <div class="grid gap-5 xl:grid-cols-[0.95fr_1.35fr]">
+              <!-- 1. คิวคำขอเลือดที่รอจัดการ (ส่งถึงแล็บแล้ว) -->
+              <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200/80">
+                <div class="mb-3.5 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-crimson"></span>
+                    <h4 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                      <i data-lucide="inbox" class="w-4 h-4 text-crimson"></i> รายการคำขอเลือดที่รอจัดการ (คิวแล็บ)
+                    </h4>
+                  </div>
+                  <span id="patientViewPendingCount" class="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-crimson border border-rose-100">0 รายการ</span>
+                </div>
+                <div id="patientViewPendingRequests" class="grid gap-2.5 max-h-[520px] overflow-y-auto pr-1"></div>
+              </div>
+
+              <!-- 2. สถานะคลังเลือด FEFO -->
+              <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200/80">
+                <div class="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <h4 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                      <i data-lucide="package-check" class="w-4 h-4 text-emerald-600"></i> สถานะคลังเลือด FEFO (First-Expired First-Out)
+                    </h4>
+                  </div>
+                  <span class="text-[0.7rem] font-semibold text-slate-500">พร้อมใช้งานทันที</span>
+                </div>
+                <!-- 4 Blood group badges -->
+                <div id="patientViewBloodSummary" class="mb-3 grid grid-cols-4 gap-2 sm:gap-2.5"></div>
+                <div class="overflow-auto rounded-xl border border-slate-200 max-h-[440px]">
+                  <table class="w-full min-w-[560px] border-collapse text-xs">
+                    <thead class="sticky top-0 bg-slate-50 text-left uppercase text-slate-600 border-b border-slate-200">
+                      <tr>
+                        <th class="p-2.5 font-bold">Donation ID</th>
+                        <th class="p-2.5 font-bold">ชนิด</th>
+                        <th class="p-2.5 font-bold">หมู่เลือด</th>
+                        <th class="p-2.5 font-bold">วันหมดอายุ</th>
+                        <th class="p-2.5 font-bold">สถานะ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="patientViewInventoryTable" class="divide-y divide-slate-100"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- 5. BLOOD GROUPING -->
@@ -5115,11 +5176,41 @@
             const { error: reqErr } = await sbClient.from('requests').insert(requestData);
             if (reqErr) throw reqErr;
 
-            await writeAuditLog(currentUser.Username, 'จองเลือด', requestId + ' HN ' + hn + ' (' + component + ' ' + units + ' unit) โดย ' + nurseName);
+            await writeAuditLog(currentUser ? currentUser.Username : 'nurse', 'จองเลือด', requestId + ' HN ' + hn + ' (' + component + ' ' + units + ' unit) โดย ' + nurseName);
+          } else {
+            var newPat = {
+              HN: hn,
+              FullName: name,
+              Age: age,
+              Ward: ward,
+              Bed: bed,
+              HistoricalABO: (abo && abo !== 'Unknown') ? abo : null,
+              HistoricalRh: (abo && abo !== 'Unknown') ? rh : null
+            };
+            var existPIdx = appData.patients.findIndex(function(p){ return p.HN === hn; });
+            if (existPIdx >= 0) appData.patients[existPIdx] = newPat; else appData.patients.push(newPat);
+
+            var requestId = 'REQ-' + formatDateCode(new Date());
+            var newReq = {
+              RequestID: requestId,
+              HN: hn,
+              Component: component,
+              Units: units,
+              Priority: priority,
+              Indication: indication,
+              Status: 'pending_grouping',
+              PatientABO: (abo && abo !== 'Unknown') ? abo : null,
+              PatientRh: (abo && abo !== 'Unknown') ? rh : null,
+              NurseName: nurseName,
+              DoctorName: doctorName,
+              CreatedAt: new Date().toISOString()
+            };
+            appData.requests.unshift(newReq);
+            await writeAuditLog(currentUser ? currentUser.Username : 'nurse', 'จองเลือด', requestId + ' HN ' + hn + ' (' + component + ' ' + units + ' unit) โดย ' + nurseName);
           }
 
           resetPatientForm();
-          message('patientMessage', 'ส่งคำสั่งจองเลือดเรียบร้อยแล้ว ห้องปฏิบัติการได้รับคำขอแล้ว', true);
+          message('patientMessage', 'ส่งคำสั่งจองเลือดเรียบร้อยแล้ว ห้องปฏิบัติการ (LAB) ได้รับคำขอแล้ว', true);
           await loadAllData();
         } catch (err) {
           message('patientMessage', 'เกิดข้อผิดพลาด: ' + err.message, false);
@@ -5532,40 +5623,50 @@
         var elPendingCount = byId('pendingCount'); if (elPendingCount) elPendingCount.textContent = pending + ' รายการ';
 
         var elPR = byId('pendingRequests');
-        if (elPR) {
-          elPR.innerHTML = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
-            var p = findBy(appData.patients, 'HN', r.HN) || {};
-            var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
-            var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || '';
-            var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || '';
-            var aboBadge = patientAbo 
-              ? ' | หมู่เลือด: <span class="font-bold text-crimson bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">' + esc(patientAbo) + (patientRh ? (' ' + (patientRh === 'Positive' ? 'Rh+' : patientRh === 'Negative' ? 'Rh-' : patientRh)) : '') + '</span>'
-              : '';
+        var elPatientPR = byId('patientViewPendingRequests');
+        var pendingCardsHtml = appData.requests.filter(function (r) { return r.Status !== 'dispensed'; }).map(function (r) {
+          var p = findBy(appData.patients, 'HN', r.HN) || {};
+          var color = r.Priority === 'Urgent' ? 'bg-amber-500' : r.Priority === 'Massive Transfusion' ? 'bg-red-600' : 'bg-crimson';
+          var patientAbo = r.PatientABO || (p ? p.HistoricalABO : '') || '';
+          var patientRh = r.PatientRh || (p ? p.HistoricalRh : '') || '';
+          var aboBadge = patientAbo 
+            ? ' | หมู่เลือดที่ขอ: <span class="font-bold text-crimson bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">' + esc(patientAbo) + (patientRh ? (' ' + (patientRh === 'Positive' ? 'Rh+' : patientRh === 'Negative' ? 'Rh-' : patientRh)) : '') + '</span>'
+            : '';
 
-            return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName, patientAbo, patientRh].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 shadow-sm hover:bg-slate-100/80 transition-colors">' +
-              '<span class="' + color + ' rounded-full"></span>' +
-              '<div>' +
+          return '<article data-search="' + esc([r.RequestID, r.HN, p.FullName, r.NurseName, patientAbo, patientRh].join(' ')) + '" class="grid grid-cols-[5px_1fr_auto] gap-2.5 sm:gap-3 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 sm:p-3.5 shadow-2xs hover:bg-slate-100/80 transition-colors">' +
+            '<span class="' + color + ' rounded-full"></span>' +
+            '<div>' +
+              '<div class="flex items-center gap-1.5 flex-wrap">' +
                 '<p class="font-bold text-slate-900 text-xs">' + esc(r.RequestID) + ' | HN ' + esc(r.HN) + '</p>' +
-                '<p class="text-[0.75rem] text-slate-600 font-medium">' + esc(p.FullName || '-') + aboBadge + ' | ' + esc(r.Component) + ' ' + esc(r.Units) + ' unit</p>' +
-                '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
+                '<span class="text-[0.62rem] px-1.5 py-0.2 rounded font-bold bg-slate-100 text-slate-700">' + esc(r.Priority) + '</span>' +
               '</div>' +
-              '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all">' +
-                esc(r.Priority) +
-              '</button>' +
-            '</article>';
-          }).join('') || '<p class="font-medium text-slate-400 text-center py-6 text-xs">ไม่มีรายการคำขอค้างดำเนินการ</p>';
-        }
+              '<p class="text-[0.75rem] text-slate-600 font-medium mt-0.5">' + esc(p.FullName || '-') + aboBadge + ' | ' + esc(r.Component) + ' <strong class="text-crimson">' + esc(r.Units) + ' unit</strong></p>' +
+              '<p class="text-[0.7rem] font-semibold text-slate-500 mt-1">สั่งโดย: ' + esc(r.NurseName || '-') + (p.Ward ? (' (' + esc(p.Ward) + ')') : '') + ' | สถานะ: <span class="text-crimson font-bold">' + statusText(r.Status) + '</span></p>' +
+            '</div>' +
+            '<button onclick="handleRequestClick(this.dataset.id)" data-id="' + esc(r.RequestID) + '" class="self-center rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-rose-50 hover:text-crimson transition-all flex items-center gap-1">' +
+              '<span>เปิดตรวจ</span> ➜' +
+            '</button>' +
+          '</article>';
+        }).join('') || '<p class="font-medium text-slate-400 text-center py-6 text-xs">ไม่มีรายการคำขอค้างดำเนินการ</p>';
+
+        if (elPR) elPR.innerHTML = pendingCardsHtml;
+        if (elPatientPR) elPatientPR.innerHTML = pendingCardsHtml;
+
+        var elPatientPendingCount = byId('patientViewPendingCount');
+        if (elPatientPendingCount) elPatientPendingCount.textContent = pending + ' รายการ';
 
         var elBS = byId('bloodSummary');
-        if (elBS) {
-          elBS.innerHTML = ['O', 'A', 'B', 'AB'].map(function (g) {
-            var c = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
-            return '<div class="rounded-xl border border-rose-100 bg-rose-50/60 p-2.5 text-center">' +
-              '<p class="text-[0.7rem] font-bold text-crimson">หมู่ ' + g + '</p>' +
-              '<p class="text-xl sm:text-2xl font-bold text-rose-900">' + c + '</p>' +
-              '</div>';
-          }).join('');
-        }
+        var elPatientBS = byId('patientViewBloodSummary');
+        var bloodSummaryHtml = ['O', 'A', 'B', 'AB'].map(function (g) {
+          var c = appData.inventory.filter(function (u) { return ['available', 'quarantine', 'reserved'].indexOf(u.Status) >= 0 && u.ABO === g; }).length;
+          return '<div class="rounded-xl border border-rose-100 bg-rose-50/60 p-2 sm:p-2.5 text-center">' +
+            '<p class="text-[0.68rem] font-bold text-crimson">หมู่ ' + g + '</p>' +
+            '<p class="text-lg sm:text-2xl font-black text-rose-900">' + c + '</p>' +
+            '</div>';
+        }).join('');
+
+        if (elBS) elBS.innerHTML = bloodSummaryHtml;
+        if (elPatientBS) elPatientBS.innerHTML = bloodSummaryHtml;
 
         var isAllowedManage = currentUser && ['ADMIN', 'MT'].indexOf(currentUser.Role) >= 0;
         var elMH = byId('manageHeader');
@@ -5616,6 +5717,30 @@
               '</tr>';
           }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="6">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
         }
+
+        var elPatientInvTable = byId('patientViewInventoryTable');
+        if (elPatientInvTable) {
+          elPatientInvTable.innerHTML = appData.inventory.slice().sort(function (a, b) { return new Date(a.ExpiresAt) - new Date(b.ExpiresAt); }).map(function (u) {
+            var daysLeft = daysUntil(u.ExpiresAt);
+            var rowColorClass = '';
+            var expiryBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+            if (daysLeft < 0) {
+              rowColorClass = 'bg-red-50/80 text-red-950 font-medium';
+              expiryBadgeClass = 'bg-red-100 text-red-800 border-red-300 font-bold';
+            } else if (daysLeft >= 0 && daysLeft <= 10) {
+              rowColorClass = 'bg-amber-50/80 text-amber-950 font-medium';
+              expiryBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+            }
+            return '<tr data-search="' + esc([u.DonationID, u.Component, u.ABO, u.Rh, u.Source].join(' ')) + '" class="border-b border-slate-100 ' + rowColorClass + ' hover:bg-slate-50 transition-colors">' +
+              '<td class="p-2.5 font-bold font-mono text-[0.72rem]">' + esc(u.DonationID) + renderAttachmentPreview(u) + '</td>' +
+              '<td class="p-2.5 font-medium">' + esc(u.Component) + '</td>' +
+              '<td class="p-2.5 font-bold text-crimson">' + esc(u.ABO) + ' ' + esc(u.Rh === 'Positive' ? '+' : u.Rh === 'Negative' ? '-' : u.Rh) + '</td>' +
+              '<td class="p-2.5"><span class="inline-block px-1.5 py-0.5 rounded text-[0.65rem] border ' + expiryBadgeClass + '">' + esc(u.ExpiresAt) + '</span></td>' +
+              '<td class="p-2.5">' + badge(u.Status, u.DonationID) + '</td>' +
+            '</tr>';
+          }).join('') || '<tr><td class="p-4 text-slate-400 text-center" colspan="5">ยังไม่มีข้อมูลในคลังเลือด</td></tr>';
+        }
+
         if (typeof updateDashboardExecutiveOverview === 'function') updateDashboardExecutiveOverview();
       }
 
