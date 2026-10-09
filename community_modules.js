@@ -1674,6 +1674,196 @@ function renderIncidentLogs() {
   var elNM = byId('execIncidentNearMissCount');
   if (elNM) elNM.textContent = inappropriateSpecimenCount;
 
+  // Render chart
+  if (typeof renderIncidentChart === 'function') {
+    renderIncidentChart();
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+window.incidentDisplayMode = 'both';
+window.incidentChartInstance = null;
+
+function renderIncidentChart(forcedType) {
+  var canvas = document.getElementById('incidentChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  var mode = window.incidentDisplayMode || 'both';
+  var chartType = forcedType || ((mode === 'donut') ? 'doughnut' : 'bar');
+
+  var list = getIncidentRecords();
+
+  // 1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด (Sentinel Event - เป้าหมาย 0)
+  var wrongTransfusionCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('ผิดคน') || s.includes('ผิดหมู่') || s.includes('ผิดชนิด') || s.includes('Wrong Patient') || s.includes('Incompatible');
+  }).length;
+  
+  // 2. อาการไม่พึงประสงค์จากการรับเลือด (Reaction)
+  var reactionsCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('อาการไม่พึงประสงค์') || s.includes('Reaction') || s.includes('FNHTR') || s.includes('แพ้') || s.includes('TRALI') || s.includes('AHTR'); 
+  }).length;
+
+  // 3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood) - นับกรณีที่สูญเสียจริง
+  var expiredWastageCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return (s.includes('หมดอายุ') || s.includes('Expired')) && !s.includes('เฝ้าระวัง'); 
+  }).length;
+
+  // 4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม (Inappropriate Specimen / Near Miss)
+  var inappropriateSpecimenCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('สิ่งส่งตรวจ') || s.includes('Clot') || s.includes('ป้าย') || s.includes('Hemolyze') || s.includes('QNS') || s.includes('หลอด'); 
+  }).length;
+
+  var labels = [
+    '1. ให้เลือดผิดคน/หมู่/ชนิด',
+    '2. อาการไม่พึงประสงค์',
+    '3. เลือดหมดอายุ (Expired)',
+    '4. สิ่งส่งตรวจไม่เหมาะสม'
+  ];
+  var dataCounts = [wrongTransfusionCount, reactionsCount, expiredWastageCount, inappropriateSpecimenCount];
+  var bgColors = ['#10b981', '#3b82f6', '#e11d48', '#f59e0b'];
+
+  if (window.incidentChartInstance) {
+    try { window.incidentChartInstance.destroy(); } catch(e) {}
+    window.incidentChartInstance = null;
+  }
+
+  if (chartType === 'doughnut') {
+    var totalInc = dataCounts.reduce(function(a, b) { return a + b; }, 0);
+    var plotData = totalInc === 0 ? [1, 0, 0, 0] : dataCounts;
+    var plotLabels = totalInc === 0 ? ['100% ปลอดภัย (Zero Incident)', '', '', ''] : labels;
+
+    window.incidentChartInstance = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: plotLabels,
+        datasets: [{
+          data: plotData,
+          backgroundColor: bgColors,
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Kanit', size: 10 }, boxWidth: 10, padding: 8 }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.label + ': ' + ctx.raw + ' รายการ';
+              }
+            }
+          }
+        }
+      }
+    });
+  } else {
+    // Bar Chart
+    window.incidentChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'จำนวนอุบัติการณ์สะสม',
+          data: dataCounts,
+          backgroundColor: bgColors,
+          borderRadius: 6,
+          maxBarThickness: 42
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ' จำนวน: ' + ctx.parsed.y + ' รายการ';
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              precision: 0,
+              font: { family: 'Kanit', size: 10 }
+            }
+          },
+          x: {
+            ticks: {
+              font: { family: 'Kanit', size: 9 },
+              callback: function(val, idx) {
+                var l = labels[idx] || '';
+                return l.split('.')[1] || l;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+function setIncidentDisplayMode(mode) {
+  window.incidentDisplayMode = mode;
+  var chartBox = byId('incidentChartContainer');
+  var tableBox = byId('incidentTableContainer');
+  var canvasBox = byId('incidentChartCanvasBox');
+  var titleEl = byId('incidentChartTitle');
+
+  var btnBoth = byId('btnIncidentModeBoth');
+  var btnBar = byId('btnIncidentModeBar');
+  var btnDonut = byId('btnIncidentModeDonut');
+  var btnTable = byId('btnIncidentModeTable');
+
+  var normalBtnClass = 'px-2.5 py-1 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1 font-semibold';
+  var activeBtnClass = 'px-2.5 py-1 rounded-lg transition-all bg-white text-teal-800 shadow-xs flex items-center gap-1 font-bold';
+
+  [btnBoth, btnBar, btnDonut, btnTable].forEach(function(b) {
+    if (b) b.className = normalBtnClass;
+  });
+
+  var activeBtn = mode === 'both' ? btnBoth :
+                  mode === 'bar' ? btnBar :
+                  mode === 'donut' ? btnDonut : btnTable;
+  if (activeBtn) activeBtn.className = activeBtnClass;
+
+  if (mode === 'table') {
+    if (chartBox) chartBox.classList.add('hidden');
+    if (tableBox) tableBox.classList.remove('hidden');
+  } else if (mode === 'bar') {
+    if (chartBox) chartBox.classList.remove('hidden');
+    if (tableBox) tableBox.classList.add('hidden');
+    if (canvasBox) canvasBox.className = 'h-64 sm:h-72 relative flex items-center justify-center';
+    if (titleEl) titleEl.innerHTML = '<i data-lucide="bar-chart-2" class="w-3 h-3 text-teal-600"></i> แผนภูมิแท่งเปรียบเทียบสถิติอุบัติการณ์ 4 หมวด (Bar Chart)';
+    renderIncidentChart('bar');
+  } else if (mode === 'donut') {
+    if (chartBox) chartBox.classList.remove('hidden');
+    if (tableBox) tableBox.classList.add('hidden');
+    if (canvasBox) canvasBox.className = 'h-64 sm:h-72 relative flex items-center justify-center';
+    if (titleEl) titleEl.innerHTML = '<i data-lucide="pie-chart" class="w-3 h-3 text-teal-600"></i> แผนภูมิสัดส่วนอุบัติการณ์ 4 หมวด (Doughnut Chart)';
+    renderIncidentChart('doughnut');
+  } else { // both
+    if (chartBox) chartBox.classList.remove('hidden');
+    if (tableBox) tableBox.classList.remove('hidden');
+    if (canvasBox) canvasBox.className = 'h-44 sm:h-48 relative flex items-center justify-center';
+    if (titleEl) titleEl.innerHTML = '<i data-lucide="activity" class="w-3 h-3 text-teal-600"></i> แผนภูมิเปรียบเทียบสถิติอุบัติการณ์ 4 หมวด';
+    renderIncidentChart('bar');
+  }
+
   if (window.lucide) lucide.createIcons();
 }
 
@@ -1729,6 +1919,8 @@ function submitIncidentReport(e) {
 window.getIncidentRecords = getIncidentRecords;
 window.saveIncidentRecords = saveIncidentRecords;
 window.renderIncidentLogs = renderIncidentLogs;
+window.renderIncidentChart = renderIncidentChart;
+window.setIncidentDisplayMode = setIncidentDisplayMode;
 window.openIncidentReportModal = openIncidentReportModal;
 window.closeIncidentReportModal = closeIncidentReportModal;
 window.submitIncidentReport = submitIncidentReport;
