@@ -53,8 +53,13 @@
       body { background-color: #f8fafc; }
       .view { display: none; }
       .view.active { display: block; }
-      .nav.active, .bottom-nav.active, .drawer-nav.active { color: #991b1b; background: #fff1f2; border-left: 4px solid #991b1b; }
+      .nav.active, .bottom-nav.active, .drawer-nav.active { color: #991b1b; background: #fff1f2; border-left: 4px solid #991b1b; font-weight: 700; }
       .bottom-nav.active { border-left: none; border-bottom: 3px solid #991b1b; }
+      #desktopMenu::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+      #desktopMenu::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      #desktopMenu::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+      #desktopMenu::-webkit-scrollbar-thumb:hover, .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      #desktopMenu, .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
       .loading .loader { display: grid; }
       .loader { display: none; }
       .guest-only, .app-only, .admin-only, .mt-only, .doctor-only, .nurse-only { display: none; }
@@ -261,7 +266,7 @@
     <div id="appShell" class="app-only min-h-screen pb-20 lg:pb-0 overflow-x-hidden w-full max-w-full">
       
       <!-- Top Header (Compact & Mobile-Responsive, No logout in header) -->
-      <header class="no-print sticky top-0 z-30 border-b border-rose-900 bg-gradient-to-r from-crimson via-crimson to-crimsonlight text-white px-2.5 py-2 sm:px-6 sm:py-3 shadow-md lg:ml-60 w-full overflow-hidden">
+      <header class="no-print sticky top-0 z-30 border-b border-rose-900 bg-gradient-to-r from-crimson via-crimson to-crimsonlight text-white px-2.5 py-2 sm:px-6 sm:py-3 shadow-md lg:ml-64 w-full overflow-hidden">
         <div class="flex items-center justify-between gap-2 sm:gap-3">
           <div class="flex items-center gap-2 sm:gap-3 min-w-0">
             <!-- Hamburger Menu Button (Mobile / Tablet only) -->
@@ -304,8 +309,8 @@
         </div>
       </header>
 
-      <!-- Desktop Sidebar (Compact w-60) -->
-      <aside id="desktopSidebar" class="no-print fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-slate-200 bg-white/95 backdrop-blur-xl p-3 shadow-sm lg:flex lg:flex-col">
+      <!-- Desktop Sidebar (Comfortable w-64) -->
+      <aside id="desktopSidebar" class="no-print fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200 bg-white/95 backdrop-blur-xl p-3.5 shadow-sm lg:flex lg:flex-col">
         <div class="mb-3 pb-3 border-b border-slate-100 flex items-center gap-2.5 shrink-0 px-1">
           <div class="h-9 w-9 bg-rose-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
             <i data-lucide="activity" class="w-5 h-5"></i>
@@ -315,10 +320,10 @@
             <p class="text-[0.62rem] font-bold text-crimson uppercase tracking-wider">Blood Bank</p>
           </div>
         </div>
-        <nav id="desktopMenu" class="flex flex-col gap-1 flex-1 overflow-y-auto pr-0.5 pb-2"></nav>
-        <div class="pt-2 border-t border-slate-100 shrink-0">
-          <button onclick="openLogoutModal()" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-1.5 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-crimson transition-colors">
-            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> ออกจากระบบ
+        <nav id="desktopMenu" class="flex flex-col gap-1.5 flex-1 overflow-y-auto pr-1 pb-3 custom-scrollbar"></nav>
+        <div class="pt-2.5 border-t border-slate-200/80 shrink-0">
+          <button onclick="openLogoutModal()" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200/90 py-2.5 px-3 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-crimson hover:border-rose-200 transition-all shadow-2xs group">
+            <i data-lucide="log-out" class="w-4 h-4 text-slate-400 group-hover:text-crimson transition-colors"></i> <span>ออกจากระบบ</span>
           </button>
         </div>
       </aside>
@@ -353,7 +358,7 @@
       </div>
 
       <!-- Main Content -->
-      <main class="px-2.5 py-3 sm:px-5 lg:ml-60 lg:px-6 max-w-full overflow-x-hidden">
+      <main class="px-2.5 py-3 sm:px-5 lg:ml-64 lg:px-6 max-w-full overflow-x-hidden">
         
         <!-- 1. DASHBOARD & MONTHLY STATS -->
         <section id="dashboard" class="view active">
@@ -6347,16 +6352,16 @@
             var subAllowed = (m.subItems || []).filter(function (s) { return !s.roles || s.roles.indexOf(role) >= 0; });
             var isOpen = !!accordionState[m.id];
             dHtml += '<div class="mb-1">' +
-              '<div class="flex items-center justify-between rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.8rem] cursor-pointer group" onclick="toggleAccordionGroup(\'' + m.id + '\')">' +
-                '<div class="flex items-center gap-2 truncate">' +
+              '<div class="flex items-center justify-between rounded-xl px-3 py-2 font-bold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.82rem] cursor-pointer group" onclick="toggleAccordionGroup(\'' + m.id + '\')">' +
+                '<div class="flex items-center gap-2.5 truncate">' +
                   '<i data-lucide="' + m.icon + '" class="w-4 h-4 shrink-0 text-crimson"></i> ' +
                   '<span class="font-bold text-slate-800">' + m.label + '</span>' +
                 '</div>' +
-                '<i data-lucide="chevron-down" id="acc_icon_' + m.id + '" class="w-3.5 h-3.5 text-slate-400 group-hover:text-crimson transition-transform duration-200" style="transform: ' + (isOpen ? 'rotate(180deg)' : 'rotate(0deg)') + '"></i>' +
+                '<i data-lucide="chevron-down" id="acc_icon_' + m.id + '" class="w-3.5 h-3.5 text-slate-400 group-hover:text-crimson transition-transform duration-200 shrink-0" style="transform: ' + (isOpen ? 'rotate(180deg)' : 'rotate(0deg)') + '"></i>' +
               '</div>' +
-              '<div id="acc_' + m.id + '" class="' + (isOpen ? '' : 'hidden') + ' space-y-0.5 pl-5 pt-0.5 border-l-2 border-rose-100 ml-4 mb-1">' +
+              '<div id="acc_' + m.id + '" class="' + (isOpen ? '' : 'hidden') + ' space-y-1 pl-4 pt-1 border-l-2 border-rose-100 ml-4 mb-1">' +
                 subAllowed.map(function (sub) {
-                  return '<button class="nav sub-nav flex items-center gap-2 w-full rounded-md px-2.5 py-1 text-left text-[0.75rem] text-slate-600 hover:bg-rose-50 hover:text-crimson transition-colors" data-view="' + sub.id + '" onclick="handleSubMenuClick(\'' + sub.id + '\', \'' + (sub.action || '') + '\')">' +
+                  return '<button class="nav sub-nav flex items-center gap-2 w-full rounded-lg px-2.5 py-1.5 text-left text-[0.78rem] text-slate-600 hover:bg-rose-50 hover:text-crimson transition-colors" data-view="' + sub.id + '" onclick="handleSubMenuClick(\'' + sub.id + '\', \'' + (sub.action || '') + '\')">' +
                     '<span>' + sub.label + '</span>' +
                   '</button>';
                 }).join('') +
@@ -6372,15 +6377,11 @@
                 '</div>' +
               '</div>';
             }
-            dHtml += '<button class="nav flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-semibold text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.8rem] truncate" data-view="' + m.id + '">' +
-              '<i data-lucide="' + m.icon + '" class="w-4 h-4 shrink-0 text-slate-500"></i> <span>' + m.label + '</span>' +
+            dHtml += '<button class="nav flex items-center gap-2.5 rounded-xl px-3 py-2 text-left font-medium text-slate-700 hover:bg-rose-50 hover:text-crimson transition-colors text-[0.82rem] w-full" data-view="' + m.id + '">' +
+              '<i data-lucide="' + m.icon + '" class="w-4 h-4 shrink-0 text-slate-500"></i> <span class="truncate leading-snug">' + m.label + '</span>' +
             '</button>';
           }
         });
-
-        if (currentUser) {
-          dHtml += '<button class="mt-auto mb-1 flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-2.5 py-2 text-left font-bold text-red-600 hover:bg-red-100 transition-colors text-[0.8rem]" onclick="openLogoutModal()"><i data-lucide="log-out" class="w-4 h-4 shrink-0"></i> ออกจากระบบ</button>';
-        }
 
         byId('desktopMenu').innerHTML = dHtml;
 
