@@ -864,43 +864,57 @@
             <!-- Main Content Body (Inside Frame) -->
             <div class="p-3.5 sm:p-6 bg-white space-y-4">
               
-              <!-- 4 Incident & Safety Metrics Row -->
+              <!-- 4 Incident & Safety Metrics Row: 4 Main Incident Categories -->
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 shadow-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[0.68rem] font-bold text-emerald-900">ให้เลือดผิดคน/ผิดหมู่</span>
-                    <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-emerald-100 text-emerald-800">เป้า 0</span>
+                
+                <!-- 1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด -->
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-emerald-50/70 border-2 border-emerald-200/80 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[0.68rem] font-bold text-emerald-950 truncate" title="การให้เลือดผิดคน ผิดหมู่ ผิดชนิด">1. ให้เลือดผิดคน ผิดหมู่ ผิดชนิด</span>
+                      <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-black bg-emerald-100 text-emerald-800 shrink-0">เป้าหมาย 0</span>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-black text-emerald-700 mt-1"><span id="execIncidentWrongTransfusionCount">0</span> <span class="text-[0.65rem] font-medium text-slate-500">ราย</span></p>
                   </div>
-                  <p class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">0 <span class="text-[0.65rem] font-medium text-slate-500">ราย</span></p>
                   <span class="text-[0.65rem] text-emerald-600 font-semibold block mt-0.5">✓ ปลอดภัย 100% (Zero Tolerance)</span>
                 </div>
 
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 shadow-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[0.68rem] font-bold text-blue-900">อาการไม่พึงประสงค์ (Reaction)</span>
-                    <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-blue-100 text-blue-800">เดือนนี้</span>
+                <!-- 2. อาการไม่พึงประสงค์จากการรับเลือด -->
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-blue-50/70 border-2 border-blue-200/80 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[0.68rem] font-bold text-blue-950 truncate" title="อาการไม่พึงประสงค์จากการรับเลือด">2. อาการไม่พึงประสงค์จากการรับเลือด</span>
+                      <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-black bg-blue-100 text-blue-800 shrink-0">เฝ้าระวัง 100%</span>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-black text-blue-700 mt-1"><span id="execIncidentReactionsCount">1</span> <span class="text-[0.65rem] font-medium text-slate-500">ราย</span></p>
                   </div>
-                  <p class="text-xl sm:text-2xl font-black text-blue-700 mt-1"><span id="execIncidentReactionsCount">0</span> <span class="text-[0.65rem] font-medium text-slate-500">ครั้ง</span></p>
-                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">สะสมปีนี้ 1 ครั้ง (FNHTR ดูแลหายปกติ)</span>
+                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">สะสม 1 ราย (FNHTR ดูแลหายปกติ)</span>
                 </div>
 
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[0.68rem] font-bold text-amber-900">เหตุเกือบพลาด (Near Miss)</span>
-                    <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-amber-100 text-amber-800">ดักจับได้</span>
+                <!-- 3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood) -->
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200/80 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[0.68rem] font-bold text-rose-950 truncate" title="เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood)">3. เลือดหมดอายุโดยไม่ได้ใช้</span>
+                      <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-black bg-rose-100 text-crimson shrink-0">Wastage</span>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-black text-crimson mt-1"><span id="execIncidentWastageCount">0</span> <span class="text-[0.65rem] font-medium text-slate-500">ยูนิต</span></p>
                   </div>
-                  <p class="text-xl sm:text-2xl font-black text-amber-700 mt-1"><span id="execIncidentNearMissCount">2</span> <span class="text-[0.65rem] font-medium text-slate-500">รายการ</span></p>
-                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">สิ่งส่งตรวจ Clot/ป้ายจาง แก้ไขทันท่วงที</span>
+                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">Wastage 0.0% • สต็อก O=2 FEFO</span>
                 </div>
 
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200 shadow-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[0.68rem] font-bold text-rose-900">เลือดสูญเสีย/หมดอายุ</span>
-                    <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-rose-100 text-crimson">Wastage</span>
+                <!-- 4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม -->
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200/80 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[0.68rem] font-bold text-amber-950 truncate" title="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม">4. สิ่งส่งตรวจไม่ถูกต้อง/ไม่เหมาะสม</span>
+                      <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-black bg-amber-100 text-amber-800 shrink-0">ดักจับ Near Miss</span>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-black text-amber-700 mt-1"><span id="execIncidentNearMissCount">2</span> <span class="text-[0.65rem] font-medium text-slate-500">รายการ</span></p>
                   </div>
-                  <p class="text-xl sm:text-2xl font-black text-crimson mt-1"><span id="execIncidentWastageCount">0.0%</span></p>
-                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">บริหารจัดการตาม FEFO ไม่มีเลือดทิ้ง</span>
+                  <span class="text-[0.65rem] text-slate-500 font-medium block mt-0.5">ดักจับได้ทันก่อนตรวจ • ปฏิเสธ/เจาะซ้ำ</span>
                 </div>
+
               </div>
 
               <!-- Matrix Breakdown & Recent Log Row -->
@@ -910,38 +924,53 @@
                   <div>
                     <h4 class="font-bold text-xs text-teal-950 flex items-center justify-between mb-2">
                       <span class="flex items-center gap-1.5">
-                        <i data-lucide="activity" class="w-3.5 h-3.5 text-teal-600"></i> สรุปการจำแนกประเภทอุบัติการณ์
+                        <i data-lucide="activity" class="w-3.5 h-3.5 text-teal-600"></i> สรุป 4 หมวดอุบัติการณ์ความปลอดภัย
                       </span>
                       <span class="text-[0.65rem] text-teal-700 font-medium">เกณฑ์ รพ.เขาฉกรรจ์</span>
                     </h4>
 
-                    <div class="space-y-1.5 text-xs">
-                      <div class="p-2 rounded-xl bg-white border border-teal-100 flex justify-between items-center shadow-2xs">
-                        <span class="text-slate-600 font-medium text-[0.72rem]">1. อาการแพ้ไม่รุนแรง (Allergic/Rash)</span>
-                        <span class="font-bold text-slate-800">0 ราย</span>
+                    <div class="space-y-2 text-xs">
+                      <!-- 1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด -->
+                      <div class="p-2.5 rounded-xl bg-white border border-teal-100 shadow-2xs">
+                        <div class="flex justify-between items-center mb-0.5">
+                          <span class="text-slate-800 font-bold text-[0.72rem]">1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด</span>
+                          <span class="font-bold text-emerald-600 text-[0.7rem]">0 ราย (0%)</span>
+                        </div>
+                        <p class="text-[0.65rem] text-slate-500 leading-tight">ระบบระบุตัวตน 2 บุคลากรหน้าเตียง + Clerical Check ซ้ำสอง ปลอดภัยสมบูรณ์</p>
                       </div>
-                      <div class="p-2 rounded-xl bg-white border border-teal-100 flex justify-between items-center shadow-2xs">
-                        <span class="text-slate-600 font-medium text-[0.72rem]">2. มีไข้หนาวสั่น (FNHTR)</span>
-                        <span class="font-bold text-amber-600">1 ราย (ปลอดภัย)</span>
+
+                      <!-- 2. อาการไม่พึงประสงค์จากการรับเลือด -->
+                      <div class="p-2.5 rounded-xl bg-white border border-teal-100 shadow-2xs">
+                        <div class="flex justify-between items-center mb-0.5">
+                          <span class="text-slate-800 font-bold text-[0.72rem]">2. อาการไม่พึงประสงค์จากการรับเลือด</span>
+                          <span class="font-bold text-blue-600 text-[0.7rem]">1 ราย (ดูแลปลอดภัย)</span>
+                        </div>
+                        <p class="text-[0.65rem] text-slate-500 leading-tight">ปฏิกิริยาไข้ไม่เกี่ยวกับเม็ดเลือดแดงแตก (FNHTR) ปฏิบัติตาม CPG หายปกติ ไม่มี TRALI/AHTR</p>
                       </div>
-                      <div class="p-2 rounded-xl bg-white border border-teal-100 flex justify-between items-center shadow-2xs">
-                        <span class="text-slate-600 font-medium text-[0.72rem]">3. เม็ดเลือดแดงแตก / TRALI / รุนแรง</span>
-                        <span class="font-bold text-emerald-600">0 ราย (0%)</span>
+
+                      <!-- 3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood) -->
+                      <div class="p-2.5 rounded-xl bg-white border border-teal-100 shadow-2xs">
+                        <div class="flex justify-between items-center mb-0.5">
+                          <span class="text-slate-800 font-bold text-[0.72rem]">3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood)</span>
+                          <span class="font-bold text-rose-600 text-[0.7rem]">0 ยูนิต (0.0%)</span>
+                        </div>
+                        <p class="text-[0.65rem] text-slate-500 leading-tight">คลัง รพ.ขนาดเล็ก สำรองเฉพาะ O=2 ยูนิต หมุนเวียนตามระบบ FEFO ไร้เลือดหมดอายุทิ้ง</p>
                       </div>
-                      <div class="p-2 rounded-xl bg-white border border-teal-100 flex justify-between items-center shadow-2xs">
-                        <span class="text-slate-600 font-medium text-[0.72rem]">4. สิ่งส่งตรวจไม่สมบูรณ์ (Clot/Hemolysis)</span>
-                        <span class="font-bold text-slate-800">2 ราย (เจาะซ้ำ)</span>
-                      </div>
-                      <div class="p-2 rounded-xl bg-white border border-teal-100 flex justify-between items-center shadow-2xs">
-                        <span class="text-slate-600 font-medium text-[0.72rem]">5. ตรวจสอบอุณหภูมิตู้แช่ (2°C - 6°C)</span>
-                        <span class="font-bold text-emerald-600">✓ ปกติต่อเนื่อง</span>
+
+                      <!-- 4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม -->
+                      <div class="p-2.5 rounded-xl bg-white border border-teal-100 shadow-2xs">
+                        <div class="flex justify-between items-center mb-0.5">
+                          <span class="text-slate-800 font-bold text-[0.72rem]">4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม</span>
+                          <span class="font-bold text-amber-600 text-[0.7rem]">2 รายการ (Near Miss)</span>
+                        </div>
+                        <p class="text-[0.65rem] text-slate-500 leading-tight">ดักจับได้ก่อนตรวจ (Clot ในหลอด 1, ป้ายชื่อเลือนราง 1) ปฏิเสธสิ่งส่งตรวจและเจาะซ้ำสำเร็จ</p>
                       </div>
                     </div>
                   </div>
 
                   <div class="pt-2 border-t border-teal-200/60 text-[0.68rem] text-teal-800 font-medium flex items-center justify-between">
                     <span>เป้าหมายความปลอดภัยผู้ป่วย (Patient Safety Goals):</span>
-                    <span class="font-bold text-emerald-700">✓ 2P Safety Standards</span>
+                    <span class="font-bold text-emerald-700">✓ ผ่านเกณฑ์ 2P Safety Standards</span>
                   </div>
                 </div>
 
@@ -2923,15 +2952,35 @@
           </div>
 
           <label class="field">
-            <span>ประเภทอุบัติการณ์ / ความเสี่ยง *</span>
+            <span>ประเภทอุบัติการณ์ / ความเสี่ยง (4 หมวดหลัก) *</span>
             <select id="incidentInputType" required>
-              <option value="สิ่งส่งตรวจมี Clot ในหลอดเลือด (Clotted Specimen)">สิ่งส่งตรวจมี Clot ในหลอดเลือด (Clotted Specimen)</option>
-              <option value="ปฏิกิริยาไข้ไม่เกี่ยวกับเม็ดเลือดแดงแตก (FNHTR)">ปฏิกิริยาไข้ไม่เกี่ยวกับเม็ดเลือดแดงแตก (FNHTR)</option>
-              <option value="อาการแพ้ทางผิวหนัง ผื่นคัน (Allergic Reaction / Urticaria)">อาการแพ้ทางผิวหนัง ผื่นคัน (Allergic Reaction / Urticaria)</option>
-              <option value="ป้ายชื่อระบุตัวตนบนหลอดเลือดเลือนราง / ไม่สมบูรณ์ (Unclear Label)">ป้ายชื่อระบุตัวตนบนหลอดเลือดเลือนราง / ไม่สมบูรณ์ (Unclear Label)</option>
-              <option value="สิ่งส่งตรวจ Hemolyze / ปริมาตรไม่เพียงพอ (Hemolyzed / QNS)">สิ่งส่งตรวจ Hemolyze / ปริมาตรไม่เพียงพอ (Hemolyzed / QNS)</option>
-              <option value="การเบิก-จ่าย หรือส่งต่อเลือดใกล้หมดอายุ (Expiry Wastage Risk)">การเบิก-จ่าย หรือส่งต่อเลือดใกล้หมดอายุ (Expiry Wastage Risk)</option>
-              <option value="อุบัติการณ์อื่นๆ ในงานบริการโลหิต">อุบัติการณ์อื่นๆ ในงานบริการโลหิต</option>
+              <optgroup label="1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด (Sentinel Event)">
+                <option value="การให้เลือดผิดคน ผิดหมู่ ผิดชนิด - ให้เลือดผิดคน (Wrong Patient Transfusion)">การให้เลือดผิดคน (Wrong Patient Transfusion)</option>
+                <option value="การให้เลือดผิดคน ผิดหมู่ ผิดชนิด - ให้เลือดผิดหมู่ ABO/Rh (ABO Incompatible)">ให้เลือดผิดหมู่ ABO/Rh (ABO Incompatible)</option>
+                <option value="การให้เลือดผิดคน ผิดหมู่ ผิดชนิด - ให้เลือดผิดชนิดส่วนประกอบ (Wrong Component)">ให้เลือดผิดชนิดส่วนประกอบ (Wrong Component)</option>
+              </optgroup>
+              <optgroup label="2. อาการไม่พึงประสงค์จากการรับเลือด (Transfusion Reaction)">
+                <option value="อาการไม่พึงประสงค์จากการรับเลือด - มีไข้หนาวสั่น (FNHTR)">มีไข้หนาวสั่น (FNHTR)</option>
+                <option value="อาการไม่พึงประสงค์จากการรับเลือด - ผื่นแพ้ คัน ลมพิษ (Allergic / Urticaria)">ผื่นแพ้ คัน ลมพิษ (Allergic / Urticaria)</option>
+                <option value="อาการไม่พึงประสงค์จากการรับเลือด - เม็ดเลือดแดงแตกเฉียบพลัน (AHTR)">เม็ดเลือดแดงแตกเฉียบพลัน (AHTR)</option>
+                <option value="อาการไม่พึงประสงค์จากการรับเลือด - ปอดบาดเจ็บ/หายใจลำบาก (TRALI / TACO)">ปอดบาดเจ็บ/หายใจลำบาก (TRALI / TACO)</option>
+                <option value="อาการไม่พึงประสงค์จากการรับเลือด - ภาวะติดเชื้อหรือช็อก (Septic Shock / Anaphylaxis)">ภาวะติดเชื้อหรือช็อก (Septic Shock / Anaphylaxis)</option>
+              </optgroup>
+              <optgroup label="3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood)">
+                <option value="เลือดหมดอายุโดยไม่ได้ใช้ - สูญเสียในคลัง (Expired Blood Wastage)">เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood Wastage)</option>
+                <option value="เลือดหมดอายุโดยไม่ได้ใช้ - คืนจากหอผู้ป่วยเกินเวลาเก็บรักษา">คืนจากหอผู้ป่วยเกินเวลาเก็บรักษา (Returned Expired/Unused)</option>
+                <option value="เลือดหมดอายุโดยไม่ได้ใช้ - เฝ้าระวังเชิงรุก (ส่งต่อ/หมุนเวียน FEFO ทันเวลา)">เฝ้าระวังเชิงรุก (ส่งต่อ/หมุนเวียน FEFO ทันเวลา ป้องกันการทิ้ง)</option>
+              </optgroup>
+              <optgroup label="4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม (Inappropriate Specimen)">
+                <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - มีลิ่มเลือด Clot ในหลอดเลือด (Clotted Specimen)" selected>มีลิ่มเลือด Clot ในหลอดเลือด (Clotted Specimen)</option>
+                <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - ป้ายชื่อ/HN เลือนรางหรือไม่ตรง (Unclear/Mismatched Label)">ป้ายชื่อ/HN เลือนรางหรือไม่ตรง (Unclear/Mismatched Label)</option>
+                <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - เม็ดเลือดแดงแตกจากการเจาะ (Hemolyzed Specimen)">เม็ดเลือดแดงแตกจากการเจาะ (Hemolyzed Specimen)</option>
+                <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - ปริมาตรเลือดไม่เพียงพอตรวจ (QNS - Quantity Not Sufficient)">ปริมาตรเลือดไม่เพียงพอตรวจ (QNS)</option>
+                <option value="สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - ชนิดหลอดตรวจหรือสารกันเลือดแข็งไม่ถูกต้อง (Wrong Tube)">ชนิดหลอดตรวจหรือสารกันเลือดแข็งไม่ถูกต้อง (Wrong Tube)</option>
+              </optgroup>
+              <optgroup label="หมวดอื่นๆ">
+                <option value="อุบัติการณ์อื่นๆ ในงานบริการโลหิตและธนาคารเลือด">อุบัติการณ์อื่นๆ ในงานบริการโลหิตและธนาคารเลือด</option>
+              </optgroup>
             </select>
           </label>
 

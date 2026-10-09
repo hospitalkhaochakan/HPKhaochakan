@@ -1544,36 +1544,55 @@ window.updateDashboardExecutiveOverview = updateDashboardExecutiveOverview;
 
 // =========================================================================
 // 5. อุบัติการณ์ของงานธนาคารเลือด โรงพยาบาลเขาฉกรรจ์ (Transfusion Incidents)
+// 4 หมวดหลัก:
+// 1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด
+// 2. อาการไม่พึงประสงค์จากการรับเลือด
+// 3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood)
+// 4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม
 // =========================================================================
 
 var DEFAULT_INCIDENT_RECORDS = [
   {
     id: 'INC-2569-001',
     date: '2026-10-02',
-    type: 'สิ่งส่งตรวจมี Clot ในหลอดเลือด (Clotted Specimen)',
+    category: 'สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม',
+    type: 'สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - มีลิ่มเลือด Clot ในหลอดเลือด (Clotted Specimen)',
     department: 'IPD (หอผู้ป่วยใน)',
     severity: 'Level B (ไม่ถึงตัวผู้ป่วย)',
-    action: 'แจ้งพยาบาลสั่งเจาะเก็บตัวอย่างใหม่ทันที และบันทึกประวัติการปฏิเสธสิ่งส่งตรวจ',
+    action: 'ปฏิเสธสิ่งส่งตรวจ แจ้งหอผู้ป่วยเจาะเก็บตัวอย่างใหม่ทันที และบันทึก Rejection Log',
     status: 'ทบทวนแล้ว',
     reporter: 'ทนพ. สมชาย'
   },
   {
     id: 'INC-2569-002',
     date: '2026-09-28',
-    type: 'ปฏิกิริยาไข้ไม่เกี่ยวกับเม็ดเลือดแดงแตก (FNHTR)',
+    category: 'อาการไม่พึงประสงค์จากการรับเลือด',
+    type: 'อาการไม่พึงประสงค์จากการรับเลือด - มีไข้หนาวสั่น (FNHTR)',
     department: 'ER (ฉุกเฉิน)',
     severity: 'Level C (อาการเล็กน้อย)',
-    action: 'ชะลอการให้เลือด ตรวจซ้ำ Clerical check + DAT ผลลบ ให้ยาลดไข้ อาการดีขึ้น',
+    action: 'ชะลอการให้เลือด ตรวจซ้ำ Clerical Check + DAT ผลลบ ให้ยาลดไข้ อาการดีขึ้นและติดตามต่อเนื่อง',
     status: 'ทบทวนแล้ว',
     reporter: 'พว. วันเพ็ญ'
   },
   {
     id: 'INC-2569-003',
     date: '2026-09-15',
-    type: 'ป้ายชื่อระบุตัวตนบนหลอดเลือดเลือนราง (Unclear Label)',
+    category: 'สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม',
+    type: 'สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม - ป้ายชื่อ/HN เลือนรางหรือไม่ตรง (Unclear Label)',
     department: 'OPD (ผู้ป่วยนอก)',
     severity: 'Level A (Near Miss ดักจับได้ทัน)',
-    action: 'ปฏิเสธสิ่งส่งตรวจ ให้เจ้าหน้าที่นำส่งพิมพ์สติกเกอร์บาร์โค้ดใหม่และยืนยันตัวตนคนไข้',
+    action: 'ดักจับได้ก่อนตรวจ ปฏิเสธสิ่งส่งตรวจและให้เจ้าหน้าที่พิมพ์สติกเกอร์บาร์โค้ดใหม่ยืนยันตัวตนคนไข้',
+    status: 'ทบทวนแล้ว',
+    reporter: 'ทนพ. สมชาย'
+  },
+  {
+    id: 'INC-2569-004',
+    date: '2026-09-08',
+    category: 'เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood)',
+    type: 'เลือดหมดอายุโดยไม่ได้ใช้ - เฝ้าระวังเชิงรุก (ส่งต่อ/หมุนเวียน FEFO ทันเวลา)',
+    department: 'LAB (ธนาคารเลือด)',
+    severity: 'Level A (ควบคุมได้ทัน)',
+    action: 'ตรวจสอบ FEFO สำรอง O+ ใกล้ 35 วัน ประสานส่งต่อใช้กับผู้ป่วยฉุกเฉินทันเวลา อัตราสูญเสีย 0 ยูนิต',
     status: 'ทบทวนแล้ว',
     reporter: 'ทนพ. สมชาย'
   }
@@ -1582,7 +1601,10 @@ var DEFAULT_INCIDENT_RECORDS = [
 function getIncidentRecords() {
   try {
     var saved = localStorage.getItem('bb_incidents_data');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch(e) {}
   return [...DEFAULT_INCIDENT_RECORDS];
 }
@@ -1598,15 +1620,15 @@ function renderIncidentLogs() {
   var tbody = byId('incidentLogTableBody');
   if (tbody) {
     tbody.innerHTML = list.map(function(item) {
-      var badgeColor = item.severity.includes('Level A') ? 'bg-slate-100 text-slate-700' :
-                       item.severity.includes('Level B') ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                       item.severity.includes('Level C') ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+      var badgeColor = (item.severity && item.severity.includes('Level A')) ? 'bg-slate-100 text-slate-700' :
+                       (item.severity && item.severity.includes('Level B')) ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                       (item.severity && item.severity.includes('Level C')) ? 'bg-blue-50 text-blue-700 border border-blue-200' :
                        'bg-rose-50 text-crimson border border-rose-200';
       return '<tr class="hover:bg-slate-50 transition-colors">' +
         '<td class="py-1.5 px-2 font-medium text-slate-600 whitespace-nowrap">' + esc(item.date) + '</td>' +
         '<td class="py-1.5 px-2 font-bold text-slate-900">' + esc(item.type) + '</td>' +
-        '<td class="py-1.5 px-2 font-semibold text-slate-700">' + esc(item.department) + '</td>' +
-        '<td class="py-1.5 px-2"><span class="px-1.5 py-0.5 rounded text-[0.62rem] font-bold ' + badgeColor + '">' + esc(item.severity) + '</span></td>' +
+        '<td class="py-1.5 px-2 font-semibold text-slate-700 whitespace-nowrap">' + esc(item.department) + '</td>' +
+        '<td class="py-1.5 px-2 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded text-[0.62rem] font-bold ' + badgeColor + '">' + esc(item.severity) + '</span></td>' +
         '<td class="py-1.5 px-2 text-slate-600 max-w-xs truncate" title="' + jsAttr(item.action) + '">' + esc(item.action) + '</td>' +
         '<td class="py-1.5 px-2 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">✓ ' + esc(item.status) + '</span></td>' +
       '</tr>';
@@ -1616,22 +1638,41 @@ function renderIncidentLogs() {
   var countBadge = byId('incidentLogCountBadge');
   if (countBadge) countBadge.textContent = list.length + ' รายการ';
 
-  var nearMissCount = list.filter(function(x) { 
-    return (x.severity && x.severity.includes('Level A')) || (x.severity && x.severity.includes('Level B')) || (x.type && x.type.includes('Clot')) || (x.type && x.type.includes('ป้าย')); 
+  // 1. การให้เลือดผิดคน ผิดหมู่ ผิดชนิด (Sentinel Event - เป้าหมาย 0)
+  var wrongTransfusionCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('ผิดคน') || s.includes('ผิดหมู่') || s.includes('ผิดชนิด') || s.includes('Wrong Patient') || s.includes('Incompatible');
   }).length;
   
+  // 2. อาการไม่พึงประสงค์จากการรับเลือด (Reaction)
   var reactionsCount = list.filter(function(x) { 
-    return (x.type && (x.type.includes('FNHTR') || x.type.includes('Reaction') || x.type.includes('ไม่พึงประสงค์') || x.type.includes('แพ้'))); 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('อาการไม่พึงประสงค์') || s.includes('Reaction') || s.includes('FNHTR') || s.includes('แพ้') || s.includes('TRALI') || s.includes('AHTR'); 
   }).length;
 
-  var elNM = byId('execIncidentNearMissCount');
-  if (elNM) elNM.textContent = nearMissCount;
+  // 3. เลือดหมดอายุโดยไม่ได้ใช้ (Expired Blood) - นับกรณีที่สูญเสียจริง
+  var expiredWastageCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return (s.includes('หมดอายุ') || s.includes('Expired')) && !s.includes('เฝ้าระวัง'); 
+  }).length;
+
+  // 4. สิ่งส่งตรวจไม่ถูกต้องหรือไม่เหมาะสม (Inappropriate Specimen / Near Miss)
+  var inappropriateSpecimenCount = list.filter(function(x) { 
+    var s = ((x.category || '') + ' ' + (x.type || ''));
+    return s.includes('สิ่งส่งตรวจ') || s.includes('Clot') || s.includes('ป้าย') || s.includes('Hemolyze') || s.includes('QNS') || s.includes('หลอด'); 
+  }).length;
+
+  var elWrong = byId('execIncidentWrongTransfusionCount');
+  if (elWrong) elWrong.textContent = wrongTransfusionCount;
 
   var elRC = byId('execIncidentReactionsCount');
   if (elRC) elRC.textContent = reactionsCount;
 
   var elWastage = byId('execIncidentWastageCount');
-  if (elWastage) elWastage.textContent = '0.0%';
+  if (elWastage) elWastage.textContent = expiredWastageCount;
+
+  var elNM = byId('execIncidentNearMissCount');
+  if (elNM) elNM.textContent = inappropriateSpecimenCount;
 
   if (window.lucide) lucide.createIcons();
 }
